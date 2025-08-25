@@ -1,6 +1,6 @@
 export type ModeType = 'test' | 'questionnaire'
-export type RoleType = 'editor' | 'respondent' | 'corrector'
-export type StatusType = 'edit' | 'open' | 'finish' | 'correction' | 'closed'
+export type RoleType = 'editor' | 'responder' | 'corrector' | 'viewer'
+export type StatusType = 'editing' | 'waiting_for_response' | 'waiting_for_correct' | 'finished' | 'archived'
 
 export type TypeKeysType = "是非題" | "單選題" | "多選題" | "填充題" | "問答題" | "評分題"
 export const TypeKeys: TypeKeysType[] = ["是非題", "單選題", "多選題", "填充題", "問答題", "評分題"]
@@ -99,16 +99,24 @@ export type TQgeneratorProps = {
 
   components: {
     formItems: {
-      [key: string]: React.ComponentType<any>
+      Select: React.ComponentType<any>
+      InputNumber: React.ComponentType<any>,
+      Input: React.ComponentType<any>
+      Radio: React.ComponentType<any>
+      Label: React.ComponentType<any>
     },
     btnItems: {
-      [key: string]: React.ComponentType<any>
+      BtnGroup: React.ComponentType<any>
+      BtnPrimary: React.ComponentType<any>
+      BtnOutline: React.ComponentType<any>
+      BtnText: React.ComponentType<any>
     },
     editor: React.ComponentType<any>
   },
   utility: {
     icons: {
-      [key: string]: React.ComponentType<any>
+      IconDrag: React.ComponentType<any>
+      IconDeleteOutline: React.ComponentType<any>
     },
     formatDate: (date: any) => string
   }

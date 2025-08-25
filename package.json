@@ -1,6 +1,6 @@
 {
   "name": "react-tqgenerator",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "description": "A React component library for generating test questions with support for multiple question types",
   "type": "module",
   "main": "./dist/index.js",
@@ -57,6 +57,8 @@
   },
   "packageManager": "yarn@4.9.2",
   "dependencies": {
-    "dayjs": "^1.11.13"
+    "@types/uuid": "^10.0.0",
+    "dayjs": "^1.11.13",
+    "uuid": "^11.1.0"
   }
 }

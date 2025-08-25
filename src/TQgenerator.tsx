@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import packageJson from '../package.json'
+import { v4 as uuid } from 'uuid'
 
 import {
   initBaseSection,
@@ -10,7 +11,7 @@ import {
   TypeKeysType,
   TQgeneratorProps
 } from './types'
-import { initTrueFalse, TrueFalseComponent } from './lib/true-false'
+import { useTrueFalse } from './lib/true-false'
 import { initSingle, SingleComponent } from './lib/single'
 import { initMultiple, MultipleComponent } from './lib/multiple'
 import { initField, FieldComponent } from './lib/field'
@@ -101,19 +102,19 @@ const StyledTQgenerator = styled.div`
   }
 `
 
+export type MyContextType = TQgeneratorProps
+export const MyContext = React.createContext<MyContextType>({} as MyContextType)
+
 const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
-  const {
-    sections,
-    setSections,
-    components,
-    utility
-    // , ...rest
-  } = props
+  const { mode, role, status, sections, setSections, components, utility } =
+    props
   const { icons } = utility
   const { IconDrag, IconDeleteOutline } = icons
   const { formItems, btnItems, editor: Editor } = components
   const { InputNumber, Select } = formItems
   const { BtnPrimary, BtnGroup, BtnOutline, BtnText } = btnItems
+
+  const { TrueFalseComponent, initTrueFalseData } = useTrueFalse()
 
   const [type, setType] = useState<TypeKeysType>('是非題')
   const addSection = (type: TypeKeysType) => {
@@ -121,7 +122,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       section.isEdit = false
       return section
     })
-    const id = new Date().getTime().toString()
+    const id = uuid()
     let newItem: Partial<SectionProps<TypeKeysType>> = {
       mode: props.mode,
       id,
@@ -129,7 +130,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     }
     switch (type) {
       case '是非題':
-        newItem = { ...newItem, ...initTrueFalse }
+        newItem = { ...newItem, ...initTrueFalseData }
         break
       case '單選題':
         newItem = { ...newItem, ...initSingle }
@@ -147,7 +148,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         newItem = { ...newItem, ...initRating }
         break
       default:
-        newItem = { ...newItem, ...initTrueFalse }
+        newItem = { ...newItem, ...initTrueFalseData }
     }
     const newSections = [
       ...currentSections,
@@ -194,160 +195,161 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }
 
   return (
-    <StyledTQgenerator>
-      {sections.map((section, index) => {
-        return (
-          <div className='section' key={section.id}>
-            <div className='section-title'>
-              <div className='section-title-drag'>
-                <IconDrag />
-              </div>
-              <span>題目 {index + 1}</span>
-              <span style={{ color: 'var(--color-disabled-icon)' }}>
-                [ {section.type} ]
-              </span>
-              <span>
-                {props.mode === 'test' && (
-                  <InputNumber
-                    style={{ width: '100px' }}
-                    value={section.score}
-                    precision={0}
-                    min={0}
-                    onChange={(value: any) =>
-                      editSection(section.id, { score: Number(value) || 0 })
-                    }
-                  />
-                )}
-              </span>
-              {!section.isEdit && (
-                <BtnGroup className='clearfix' style={{ float: 'right' }}>
-                  <BtnOutline
-                    key='edit'
-                    size='small'
-                    onClick={() => switchSectionStatus(section.id)}
-                  >
-                    編輯
-                  </BtnOutline>
-                  <BtnText
-                    key='delete'
-                    theme='danger'
-                    onClick={() => deleteSection(section.id)}
-                  >
-                    <IconDeleteOutline />
-                  </BtnText>
-                </BtnGroup>
-              )}
-            </div>
-            <div className='section-body'>
-              {section.isEdit ? (
-                <div className='section-body-question active'>
-                  <Editor
-                    title=''
-                    height={200}
-                    value={section.question}
-                    onSave={(
-                      content: string
-                      // setIsLoading: (value: boolean) => void,
-                      // contentH: number | null
-                    ) => {
-                      saveSection(section.id, content)
-                    }}
-                    onUploadImage={() => console.log('onUploadImage')}
-                  />
+    <MyContext.Provider
+      value={{
+        mode,
+        role,
+        status,
+        sections,
+        setSections,
+        components,
+        utility
+      }}
+    >
+      <StyledTQgenerator>
+        {sections.map((section, index) => {
+          return (
+            <div className='section' key={section.id}>
+              <div className='section-title'>
+                <div className='section-title-drag'>
+                  <IconDrag />
                 </div>
-              ) : (
-                <div
-                  className={`section-body-question ${
-                    !section.question && 'empty'
-                  }`}
-                  dangerouslySetInnerHTML={{ __html: section.question }}
-                />
-              )}
-              <div className='section-body-question-option'>
-                {section.type === '是非題' && (
-                  <TrueFalseComponent
-                    components={components}
-                    utility={utility}
-                    {...section}
-                    updateSection={(data: SectionProps<TypeKeysType>) =>
-                      editSection(section.id, data)
-                    }
-                  />
-                )}
-                {section.type === '單選題' && (
-                  <SingleComponent
-                    components={components}
-                    utility={utility}
-                    {...section}
-                    updateSection={(data: SectionProps<TypeKeysType>) =>
-                      editSection(section.id, data)
-                    }
-                  />
-                )}
-                {section.type === '多選題' && (
-                  <MultipleComponent
-                    components={components}
-                    utility={utility}
-                    {...section}
-                    updateSection={(data: SectionProps<TypeKeysType>) =>
-                      editSection(section.id, data)
-                    }
-                  />
-                )}
-                {section.type === '填充題' && (
-                  <FieldComponent
-                    components={components}
-                    utility={utility}
-                    {...section}
-                    updateSection={(data: SectionProps<TypeKeysType>) =>
-                      editSection(section.id, data)
-                    }
-                  />
-                )}
-                {section.type === '問答題' && (
-                  <EssayComponent
-                    components={components}
-                    utility={utility}
-                    {...section}
-                    updateSection={(data: SectionProps<TypeKeysType>) =>
-                      editSection(section.id, data)
-                    }
-                  />
-                )}
-                {section.type === '評分題' && (
-                  <RatingComponent
-                    components={components}
-                    utility={utility}
-                    {...section}
-                    updateSection={(data: SectionProps<TypeKeysType>) =>
-                      editSection(section.id, data)
-                    }
-                  />
+                <span>題目 {index + 1}</span>
+                <span style={{ color: 'var(--color-disabled-icon)' }}>
+                  [ {section.type} ]
+                </span>
+                <span>
+                  {props.mode === 'test' && (
+                    <InputNumber
+                      style={{ width: '100px' }}
+                      value={section.score}
+                      precision={0}
+                      min={0}
+                      onChange={(value: any) =>
+                        editSection(section.id, { score: Number(value) || 0 })
+                      }
+                    />
+                  )}
+                </span>
+                {!section.isEdit && (
+                  <BtnGroup className='clearfix' style={{ float: 'right' }}>
+                    <BtnOutline
+                      key='edit'
+                      size='small'
+                      onClick={() => switchSectionStatus(section.id)}
+                    >
+                      編輯
+                    </BtnOutline>
+                    <BtnText
+                      key='delete'
+                      theme='danger'
+                      onClick={() => deleteSection(section.id)}
+                    >
+                      <IconDeleteOutline />
+                    </BtnText>
+                  </BtnGroup>
                 )}
               </div>
+              <div className='section-body'>
+                {section.isEdit ? (
+                  <div className='section-body-question active'>
+                    <Editor
+                      title=''
+                      height={200}
+                      value={section.question}
+                      onSave={(
+                        content: string
+                        // setIsLoading: (value: boolean) => void,
+                        // contentH: number | null
+                      ) => {
+                        saveSection(section.id, content)
+                      }}
+                      onUploadImage={() => console.log('onUploadImage')}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className={`section-body-question ${
+                      !section.question && 'empty'
+                    }`}
+                    dangerouslySetInnerHTML={{ __html: section.question }}
+                  />
+                )}
+                <div className='section-body-question-option'>
+                  {/* TODO */}
+                  {section.type === '是非題' && (
+                    <TrueFalseComponent
+                      section={section}
+                      updateSection={(data: SectionProps<TypeKeysType>) =>
+                        editSection(section.id, data)
+                      }
+                    />
+                  )}
+                  {section.type === '多選題' && (
+                    <MultipleComponent
+                      components={components}
+                      utility={utility}
+                      {...section}
+                      updateSection={(data: SectionProps<TypeKeysType>) =>
+                        editSection(section.id, data)
+                      }
+                    />
+                  )}
+                  {section.type === '填充題' && (
+                    <FieldComponent
+                      components={components}
+                      utility={utility}
+                      {...section}
+                      updateSection={(data: SectionProps<TypeKeysType>) =>
+                        editSection(section.id, data)
+                      }
+                    />
+                  )}
+                  {section.type === '問答題' && (
+                    <EssayComponent
+                      components={components}
+                      utility={utility}
+                      {...section}
+                      updateSection={(data: SectionProps<TypeKeysType>) =>
+                        editSection(section.id, data)
+                      }
+                    />
+                  )}
+                  {section.type === '評分題' && (
+                    <RatingComponent
+                      components={components}
+                      utility={utility}
+                      {...section}
+                      updateSection={(data: SectionProps<TypeKeysType>) =>
+                        editSection(section.id, data)
+                      }
+                    />
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        )
-      })}
-      <div className='section-body-add'>
-        <Select
-          allowClear={false}
-          options={TypeKeys.map((key) => {
-            return {
-              key,
-              value: key,
-              label: key
-            }
-          })}
-          value={type}
-          onChange={(value: any) => {
-            setType(value as TypeKeysType)
-          }}
-        />
-        <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
-      </div>
-      <div className='version'>v{packageJson.version}</div>
-    </StyledTQgenerator>
+          )
+        })}
+        <div className='section-body-add'>
+          <Select
+            allowClear={false}
+            options={TypeKeys.map((key) => {
+              return {
+                key,
+                value: key,
+                label: key
+              }
+            })}
+            value={type}
+            onChange={(value: any) => {
+              setType(value as TypeKeysType)
+            }}
+          />
+          <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
+        </div>
+        <div className='version'>v{packageJson.version}</div>
+      </StyledTQgenerator>
+    </MyContext.Provider>
   )
 }
 export default TQgenerator
