@@ -102,7 +102,7 @@ const StyledTQgenerator = styled.div`
   }
 `
 
-export type MyContextType = TQgeneratorProps
+export type MyContextType = Omit<TQgeneratorProps, 'setRole' | 'setStatus'>
 export const MyContext = React.createContext<MyContextType>({} as MyContextType)
 
 const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
@@ -280,6 +280,16 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                   {section.type === '是非題' && (
                     <TrueFalseComponent
                       section={section}
+                      updateSection={(data: SectionProps<TypeKeysType>) =>
+                        editSection(section.id, data)
+                      }
+                    />
+                  )}
+                  {section.type === '單選題' && (
+                    <SingleComponent
+                      components={components}
+                      utility={utility}
+                      {...section}
                       updateSection={(data: SectionProps<TypeKeysType>) =>
                         editSection(section.id, data)
                       }

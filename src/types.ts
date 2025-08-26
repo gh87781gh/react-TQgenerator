@@ -93,17 +93,21 @@ export type SectionProps<T extends TypeKeysType> = SectionTypeMap[T]
 export type TQgeneratorProps = {
   mode: ModeType
   role: RoleType
+  setRole: (role: RoleType) => void
   status: StatusType
+  setStatus: (status: StatusType) => void
   sections: SectionProps<TypeKeysType>[]
   setSections: (sections: SectionProps<TypeKeysType>[]) => void
 
   components: {
     formItems: {
       Select: React.ComponentType<any>
-      InputNumber: React.ComponentType<any>,
+      InputNumber: React.ComponentType<any>
       Input: React.ComponentType<any>
       Radio: React.ComponentType<any>
       Label: React.ComponentType<any>
+      Checkbox: React.ComponentType<any>
+      Textarea: React.ComponentType<any>
     },
     btnItems: {
       BtnGroup: React.ComponentType<any>
