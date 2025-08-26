@@ -1,6 +1,5 @@
-import React, { useContext, useMemo } from 'react'
+import React, { useContext } from 'react'
 import styled from 'styled-components'
-import { v4 as uuid } from 'uuid'
 
 import { TrueFalseProps } from '../types'
 import { MyContext, MyContextType } from '../TQgenerator'
@@ -30,6 +29,7 @@ export const useTrueFalse = () => {
     const { formItems } = components
     const { Input, Label, Radio } = formItems
 
+    // TODO 會有輸入一個字母就失焦的bug，需要解決
     const editOptions = (
       key: string,
       optionKey: 'label' | 'isCorrect',
@@ -90,13 +90,10 @@ export const useTrueFalse = () => {
     )
   }
 
-  const initTrueFalseData: Pick<
-    TrueFalseProps,
-    'type' | 'boolean' | 'options'
-  > = useMemo(() => {
+  const initTrueFalseData = (itemId: string) => {
     let initOptions: TrueFalseProps['options'] = []
     for (let i = 0; i < answerOptions.length; i++) {
-      const key = uuid()
+      const key = `${itemId}-${i}`
       initOptions.push({
         key,
         label: '',
@@ -105,11 +102,11 @@ export const useTrueFalse = () => {
       })
     }
     return {
-      type: '是非題',
+      type: '是非題' as const,
       boolean: null,
       options: initOptions
     }
-  }, [])
+  }
 
   return { TrueFalseComponent, initTrueFalseData }
 }

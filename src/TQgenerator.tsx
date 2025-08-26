@@ -2,12 +2,10 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import packageJson from '../package.json'
-import { v4 as uuid } from 'uuid'
 
 import {
   initBaseSection,
   SectionProps,
-  TypeKeys,
   TypeKeysType,
   TQgeneratorProps
 } from './types'
@@ -122,15 +120,15 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       section.isEdit = false
       return section
     })
-    const id = uuid()
+    const id = String(sections.length + 1)
     let newItem: Partial<SectionProps<TypeKeysType>> = {
-      mode: props.mode,
+      mode,
       id,
       ...initBaseSection
     }
     switch (type) {
       case '是非題':
-        newItem = { ...newItem, ...initTrueFalseData }
+        newItem = { ...newItem, ...initTrueFalseData(id) }
         break
       case '單選題':
         newItem = { ...newItem, ...initSingle }
@@ -148,7 +146,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         newItem = { ...newItem, ...initRating }
         break
       default:
-        newItem = { ...newItem, ...initTrueFalseData }
+        newItem = { ...newItem, ...initTrueFalseData(id) }
     }
     const newSections = [
       ...currentSections,
@@ -192,6 +190,28 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         : section
     )
     setSections(newSections)
+  }
+
+  const getOptions = () => {
+    const TypeKeysForTest = ['是非題', '單選題', '多選題', '填充題', '問答題']
+    const TypeKeysForQuest = ['單選題', '多選題', '填充題', '問答題', '評分題']
+    return mode === 'test'
+      ? TypeKeysForTest.map((key) => {
+          return {
+            key,
+            value: key,
+            label: key
+          }
+        })
+      : mode === 'questionnaire'
+      ? TypeKeysForQuest.map((key) => {
+          return {
+            key,
+            value: key,
+            label: key
+          }
+        })
+      : []
   }
 
   return (
@@ -343,13 +363,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         <div className='section-body-add'>
           <Select
             allowClear={false}
-            options={TypeKeys.map((key) => {
-              return {
-                key,
-                value: key,
-                label: key
-              }
-            })}
+            options={getOptions()}
             value={type}
             onChange={(value: any) => {
               setType(value as TypeKeysType)
