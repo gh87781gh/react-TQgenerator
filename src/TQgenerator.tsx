@@ -10,11 +10,11 @@ import {
   TQgeneratorProps
 } from './types'
 import { useTrueFalse } from './lib/true-false'
-import { initSingle, SingleComponent } from './lib/single'
-import { initMultiple, MultipleComponent } from './lib/multiple'
-import { initField, FieldComponent } from './lib/field'
-import { initEssay, EssayComponent } from './lib/essay'
-import { initRating, RatingComponent } from './lib/rating'
+import { useSingle } from './lib/single'
+import { useMultiple } from './lib/multiple'
+import { useField } from './lib/field'
+import { useEssay } from './lib/essay'
+import { useRating } from './lib/rating'
 
 const StyledTQgenerator = styled.div`
   width: 100%;
@@ -113,8 +113,15 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   const { BtnPrimary, BtnGroup, BtnOutline, BtnText } = btnItems
 
   const { TrueFalseComponent, initTrueFalseData } = useTrueFalse()
+  const { SingleComponent, initSingleData } = useSingle()
+  const { MultipleComponent, initMultipleData } = useMultiple()
+  const { FieldComponent, initFieldData } = useField()
+  const { EssayComponent, initEssayData } = useEssay()
+  const { RatingComponent, initRatingData } = useRating()
 
-  const [type, setType] = useState<TypeKeysType>('是非題')
+  const [type, setType] = useState<TypeKeysType>(
+    mode === 'test' ? '是非題' : '單選題'
+  )
   const addSection = (type: TypeKeysType) => {
     const currentSections = sections.map((section) => {
       section.isEdit = false
@@ -131,19 +138,19 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         newItem = { ...newItem, ...initTrueFalseData(id) }
         break
       case '單選題':
-        newItem = { ...newItem, ...initSingle }
+        newItem = { ...newItem, ...initSingleData(id) }
         break
       case '多選題':
-        newItem = { ...newItem, ...initMultiple }
+        newItem = { ...newItem, ...initMultipleData(id) }
         break
       case '填充題':
-        newItem = { ...newItem, ...initField }
+        newItem = { ...newItem, ...initFieldData() }
         break
       case '問答題':
-        newItem = { ...newItem, ...initEssay }
+        newItem = { ...newItem, ...initEssayData() }
         break
       case '評分題':
-        newItem = { ...newItem, ...initRating }
+        newItem = { ...newItem, ...initRatingData() }
         break
       default:
         newItem = { ...newItem, ...initTrueFalseData(id) }
@@ -307,9 +314,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                   )}
                   {section.type === '單選題' && (
                     <SingleComponent
-                      components={components}
-                      utility={utility}
-                      {...section}
+                      section={section}
                       updateSection={(data: SectionProps<TypeKeysType>) =>
                         editSection(section.id, data)
                       }
@@ -317,9 +322,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                   )}
                   {section.type === '多選題' && (
                     <MultipleComponent
-                      components={components}
-                      utility={utility}
-                      {...section}
+                      section={section}
                       updateSection={(data: SectionProps<TypeKeysType>) =>
                         editSection(section.id, data)
                       }
@@ -327,9 +330,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                   )}
                   {section.type === '填充題' && (
                     <FieldComponent
-                      components={components}
-                      utility={utility}
-                      {...section}
+                      section={section}
                       updateSection={(data: SectionProps<TypeKeysType>) =>
                         editSection(section.id, data)
                       }
@@ -337,9 +338,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                   )}
                   {section.type === '問答題' && (
                     <EssayComponent
-                      components={components}
-                      utility={utility}
-                      {...section}
+                      section={section}
                       updateSection={(data: SectionProps<TypeKeysType>) =>
                         editSection(section.id, data)
                       }
@@ -347,9 +346,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                   )}
                   {section.type === '評分題' && (
                     <RatingComponent
-                      components={components}
-                      utility={utility}
-                      {...section}
+                      section={section}
                       updateSection={(data: SectionProps<TypeKeysType>) =>
                         editSection(section.id, data)
                       }

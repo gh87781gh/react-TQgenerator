@@ -1,10 +1,7 @@
+import React, { useContext } from 'react'
 import styled from 'styled-components'
-import {
-  FieldProps,
-  FieldAnswerKeys,
-  FieldAnswerMap,
-  TQgeneratorProps
-} from '../types'
+import { FieldProps, FieldAnswerKeys, FieldAnswerMap } from '../types'
+import { MyContext, MyContextType } from '../TQgenerator'
 
 const StyledAnswerType = styled.div`
   display: flex;
@@ -18,88 +15,88 @@ const AnswerTypeMap: Record<FieldAnswerKeys, string> = {
   number: '數字輸入',
   date: '日期格式輸入'
 }
-export const initField: Pick<
-  FieldProps<FieldAnswerKeys>,
-  'type' | 'answerType' | 'answer'
-> = {
-  type: '填充題',
-  answerType: 'input',
-  answer: ''
+
+export const useField = () => {
+  const FieldComponent: React.FC<{
+    section: FieldProps<FieldAnswerKeys>
+    updateSection: (data: any) => void
+  }> = ({ section, updateSection }) => {
+    const { components } = useContext<MyContextType>(MyContext)
+    const { formItems } = components
+    const { Label, Radio, Textarea } = formItems
+    const editAnswerType = (value: FieldAnswerKeys) => {
+      updateSection({ ...section, answerType: value })
+    }
+    const editAnswer = (value: FieldAnswerMap[FieldAnswerKeys]) => {
+      updateSection({ ...section, answer: value })
+    }
+    return (
+      <>
+        <Label>選項</Label>
+        <StyledAnswerType>
+          {Object.keys(AnswerTypeMap).map((key) => {
+            return (
+              <Radio
+                disabled={!section.isEdit}
+                key={key}
+                checked={section.answerType === key}
+                onChange={() => editAnswerType(key as FieldAnswerKeys)}
+              >
+                {AnswerTypeMap[key as FieldAnswerKeys]}
+              </Radio>
+            )
+          })}
+        </StyledAnswerType>
+        {section.mode === 'test' && (
+          <>
+            <Label>建議答案</Label>
+            <Textarea
+              disabled={!section.isEdit}
+              value={(section.answer as FieldAnswerMap[FieldAnswerKeys]) || ''}
+              onChange={(e: any) => editAnswer(e.target.value)}
+            />
+          </>
+        )}
+
+        {/* TODO 這是填寫者要用的 */}
+        {/* <div style={{ width: '300px' }}>
+          {section.answerType === 'input' && (
+            <Input
+              disabled={!section.isEdit}
+              value={(section.answer as FieldAnswerMap['input']) || ''}
+              onChange={(e) => editAnswer(e.target.value)}
+            />
+          )}
+          {section.answerType === 'number' && (
+            <InputNumber
+              disabled={!section.isEdit}
+              value={(section.answer as FieldAnswerMap['number']) || ''}
+              onChange={(value) => editAnswer(value)}
+            />
+          )}
+          {section.answerType === 'date' && (
+            <DatePicker
+              disabled={!section.isEdit}
+              value={
+                (section.answer as FieldAnswerMap['date'])
+                  ? dayjs(section.answer as FieldAnswerMap['date'])
+                  : null
+              }
+              onChange={(day: Dayjs) => editAnswer(formatDate(day))}
+            />
+          )}
+        </div> */}
+      </>
+    )
+  }
+
+  const initFieldData = () => {
+    return {
+      type: '填充題' as const,
+      answerType: 'input' as FieldAnswerKeys,
+      answer: ''
+    }
+  }
+
+  return { FieldComponent, initFieldData }
 }
-
-export const FieldComponent = (
-  props: FieldProps<FieldAnswerKeys> & {
-    components: TQgeneratorProps['components']
-    utility: TQgeneratorProps['utility']
-  }
-) => {
-  const { components } = props
-  const { formItems } = components
-  const { Label, Radio, Textarea } = formItems
-  const editAnswerType = (value: FieldAnswerKeys) => {
-    props.updateSection({ ...props, answerType: value })
-  }
-  const editAnswer = (value: FieldAnswerMap[FieldAnswerKeys]) => {
-    props.updateSection({ ...props, answer: value })
-  }
-  return (
-    <>
-      <Label>選項</Label>
-      <StyledAnswerType>
-        {Object.keys(AnswerTypeMap).map((key) => {
-          return (
-            <Radio
-              disabled={!props.isEdit}
-              key={key}
-              checked={props.answerType === key}
-              onChange={() => editAnswerType(key as FieldAnswerKeys)}
-            >
-              {AnswerTypeMap[key as FieldAnswerKeys]}
-            </Radio>
-          )
-        })}
-      </StyledAnswerType>
-      {props.mode === 'test' && (
-        <>
-          <Label>建議答案</Label>
-          <Textarea
-            disabled={!props.isEdit}
-            value={(props.answer as FieldAnswerMap[FieldAnswerKeys]) || ''}
-            onChange={(e: any) => editAnswer(e.target.value)}
-          />
-        </>
-      )}
-
-      {/* TODO 這是填寫者要用的 */}
-      {/* <div style={{ width: '300px' }}>
-        {props.answerType === 'input' && (
-          <Input
-            disabled={!props.isEdit}
-            value={(props.answer as FieldAnswerMap['input']) || ''}
-            onChange={(e) => editAnswer(e.target.value)}
-          />
-        )}
-        {props.answerType === 'number' && (
-          <InputNumber
-            disabled={!props.isEdit}
-            value={(props.answer as FieldAnswerMap['number']) || ''}
-            onChange={(value) => editAnswer(value)}
-          />
-        )}
-        {props.answerType === 'date' && (
-          <DatePicker
-            disabled={!props.isEdit}
-            value={
-              (props.answer as FieldAnswerMap['date'])
-                ? dayjs(props.answer as FieldAnswerMap['date'])
-                : null
-            }
-            onChange={(day: Dayjs) => editAnswer(formatDate(day))}
-          />
-        )}
-      </div> */}
-    </>
-  )
-}
-
-FieldComponent.displayName = 'FieldComponent'
