@@ -106,11 +106,17 @@ export const MyContext = React.createContext<MyContextType>({} as MyContextType)
 const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   const { mode, role, status, sections, setSections, components, utility } =
     props
+
+  if (!mode || !role || !status) {
+    return null
+  }
+
   const { icons } = utility
   const { IconDrag, IconDeleteOutline } = icons
-  const { formItems, btnItems, editor: Editor } = components
+  const { formItems, btnItems, editor } = components
   const { InputNumber, Select } = formItems
   const { BtnPrimary, BtnGroup, BtnOutline, BtnText } = btnItems
+  const { component: Editor, onUploadImage } = editor
 
   const [type, setType] = useState<TypeKeysType>('是非題')
   const addSection = (type: TypeKeysType) => {
@@ -150,7 +156,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       ...currentSections,
       { ...newItem }
     ] as SectionProps<TypeKeysType>[]
-    setSections(newSections)
+    setSections?.(newSections)
   }
   const switchSectionStatus = (id: string) => {
     const currentStatus = sections.find((section) => section.id === id)?.isEdit
@@ -166,7 +172,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           : { ...section, isEdit: false }
       )
     }
-    setSections(newSections)
+    setSections?.(newSections)
   }
   const editSection = (
     id: string,
@@ -175,11 +181,11 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     const newSections = sections.map((section) =>
       section.id === id ? { ...section, ...data } : section
     )
-    setSections(newSections as SectionProps<TypeKeysType>[])
+    setSections?.(newSections as SectionProps<TypeKeysType>[])
   }
   const deleteSection = (id: string) => {
     const newSections = sections.filter((section) => section.id !== id)
-    setSections(newSections)
+    setSections?.(newSections)
   }
   const saveSection = (id: string, content: string) => {
     const newSections = sections.map((section) =>
@@ -187,7 +193,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         ? { ...section, question: content, isEdit: false }
         : section
     )
-    setSections(newSections)
+    setSections?.(newSections)
   }
 
   const getOptions = () => {
@@ -285,7 +291,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                       ) => {
                         saveSection(section.id, content)
                       }}
-                      onUploadImage={() => console.log('onUploadImage')}
+                      onUploadImage={onUploadImage}
                     />
                   </div>
                 ) : (

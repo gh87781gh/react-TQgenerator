@@ -91,13 +91,13 @@ export type SectionTypeMap = {
 export type SectionProps<T extends TypeKeysType> = SectionTypeMap[T]
 
 export type TQgeneratorProps = {
-  mode: ModeType
-  role: RoleType
-  setRole: (role: RoleType) => void
-  status: StatusType
-  setStatus: (status: StatusType) => void
+  mode: ModeType | null
+  role: RoleType | null
+  setRole?: (role: RoleType) => void
+  status: StatusType | null
+  setStatus?: (status: StatusType) => void
   sections: SectionProps<TypeKeysType>[]
-  setSections: (sections: SectionProps<TypeKeysType>[]) => void
+  setSections?: (sections: SectionProps<TypeKeysType>[]) => void
 
   components: {
     formItems: {
@@ -115,7 +115,10 @@ export type TQgeneratorProps = {
       BtnOutline: React.ComponentType<any>
       BtnText: React.ComponentType<any>
     },
-    editor: React.ComponentType<any>
+    editor: {
+      component: React.ComponentType<any>,
+      onUploadImage: (image: string) => void
+    }
   },
   utility: {
     icons: {
