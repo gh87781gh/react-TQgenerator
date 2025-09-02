@@ -1,5 +1,7 @@
+import { useContext } from 'react'
 import styled from 'styled-components'
-import { RatingProps, TQgeneratorProps } from '../types'
+import { RatingProps } from '../types'
+import { MyContext } from '../TQgenerator'
 
 const StyledRatingType = styled.div`
   display: flex;
@@ -34,13 +36,9 @@ export const initRating: Pick<
   ratingGap: 1
 }
 
-export const RatingComponent = (
-  props: RatingProps & {
-    components: TQgeneratorProps['components']
-    utility: TQgeneratorProps['utility']
-  }
-) => {
-  const { components } = props
+export const RatingComponent = (props: RatingProps) => {
+  const context = useContext(MyContext)
+  const { components } = context
   const { formItems } = components
   const { Label, Radio, InputNumber } = formItems
   const editRatingType = (value: RatingProps['ratingType']) => {
@@ -144,5 +142,3 @@ export const RatingComponent = (
     </>
   )
 }
-
-RatingComponent.displayName = 'RatingComponent'

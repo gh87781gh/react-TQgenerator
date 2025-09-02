@@ -1,10 +1,7 @@
+import { useContext } from 'react'
 import styled from 'styled-components'
-import {
-  FieldProps,
-  FieldAnswerKeys,
-  FieldAnswerMap,
-  TQgeneratorProps
-} from '../types'
+import { FieldProps, FieldAnswerKeys, FieldAnswerMap } from '../types'
+import { MyContext } from '../TQgenerator'
 
 const StyledAnswerType = styled.div`
   display: flex;
@@ -27,13 +24,9 @@ export const initField: Pick<
   answer: ''
 }
 
-export const FieldComponent = (
-  props: FieldProps<FieldAnswerKeys> & {
-    components: TQgeneratorProps['components']
-    utility: TQgeneratorProps['utility']
-  }
-) => {
-  const { components } = props
+export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
+  const context = useContext(MyContext)
+  const { components } = context
   const { formItems } = components
   const { Label, Radio, Textarea } = formItems
   const editAnswerType = (value: FieldAnswerKeys) => {
@@ -61,7 +54,7 @@ export const FieldComponent = (
       </StyledAnswerType>
       {props.mode === 'test' && (
         <>
-          <Label>建議答案</Label>
+          <Label>解析</Label>
           <Textarea
             disabled={!props.isEdit}
             value={(props.answer as FieldAnswerMap[FieldAnswerKeys]) || ''}
@@ -101,5 +94,3 @@ export const FieldComponent = (
     </>
   )
 }
-
-FieldComponent.displayName = 'FieldComponent'

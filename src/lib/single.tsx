@@ -1,4 +1,6 @@
-import { SingleProps, TQgeneratorProps } from '../types'
+import { useContext } from 'react'
+import { SingleProps } from '../types'
+import { MyContext } from '../TQgenerator'
 import styled from 'styled-components'
 
 const StyledOption = styled.div`
@@ -24,33 +26,37 @@ const StyledOption = styled.div`
 `
 
 const answerOptions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-let initOptions: SingleProps['options'] = []
-for (let i = 0; i < 3; i++) {
-  const key = `${new Date().getTime().toString()}-${i}`
-  initOptions.push({
-    key,
-    label: '',
-    value: key,
-    isCorrect: false,
-    score: 0
-  })
+const getInitOptions: (id: string) => SingleProps['options'] = (id: string) => {
+  let options: SingleProps['options'] = []
+  for (let i = 0; i < 3; i++) {
+    const key = `${id}-${i}`
+    options.push({
+      key,
+      label: '',
+      value: key,
+      isCorrect: false,
+      score: 0
+    })
+  }
+  return options
 }
-export const initSingle: Pick<SingleProps, 'type' | 'options'> = {
-  type: '單選題',
-  options: initOptions
+export const initSingle: (
+  id: string
+) => Pick<SingleProps, 'type' | 'options'> = (id: string) => {
+  return {
+    type: '單選題',
+    options: getInitOptions(id)
+  }
 }
 
-export const SingleComponent = (
-  props: SingleProps & {
-    components: TQgeneratorProps['components']
-    utility: TQgeneratorProps['utility']
-  }
-) => {
-  const { components, utility } = props
+export const SingleComponent = (props: SingleProps) => {
+  const context = useContext(MyContext)
+  const { components, utility } = context
   const { icons } = utility
   const { formItems, btnItems } = components
   const { Input, Label, Radio, InputNumber } = formItems
   const { BtnOutline, BtnText } = btnItems
+
   const editOptions = (
     key: (typeof answerOptions)[number],
     optionKey: 'label' | 'isCorrect' | 'score',
@@ -93,7 +99,6 @@ export const SingleComponent = (
     })
     props.updateSection({ ...props, options: newOptions })
   }
-
   const renderOptions = (isEdit: boolean) => {
     return props.options.map((option, index) => {
       return (
@@ -153,6 +158,7 @@ export const SingleComponent = (
       )
     })
   }
+
   return (
     <>
       <Label>選項</Label>
@@ -165,5 +171,3 @@ export const SingleComponent = (
     </>
   )
 }
-
-SingleComponent.displayName = 'SingleComponent'

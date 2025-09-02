@@ -1,5 +1,7 @@
+import { useContext } from 'react'
 import styled from 'styled-components'
-import { MultipleProps, TQgeneratorProps } from '../types'
+import { MultipleProps } from '../types'
+import { MyContext } from '../TQgenerator'
 
 const StyledOption = styled.div`
   display: flex;
@@ -25,28 +27,33 @@ const StyledOption = styled.div`
 `
 
 const answerOptions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-let initOptions: MultipleProps['options'] = []
-for (let i = 0; i < 4; i++) {
-  const key = `${new Date().getTime().toString()}-${i}`
-  initOptions.push({
-    key,
-    label: '',
-    value: key,
-    isCorrect: false,
-    score: 0
-  })
-}
-export const initMultiple: Pick<MultipleProps, 'type' | 'options'> = {
-  type: '多選題',
-  options: initOptions
-}
-export const MultipleComponent = (
-  props: MultipleProps & {
-    components: TQgeneratorProps['components']
-    utility: TQgeneratorProps['utility']
-  }
+const getInitOptions: (id: string) => MultipleProps['options'] = (
+  id: string
 ) => {
-  const { components, utility } = props
+  let options: MultipleProps['options'] = []
+  for (let i = 0; i < 4; i++) {
+    const key = `${id}-${i}`
+    options.push({
+      key,
+      label: '',
+      value: key,
+      isCorrect: false,
+      score: 0
+    })
+  }
+  return options
+}
+export const initMultiple: (
+  id: string
+) => Pick<MultipleProps, 'type' | 'options'> = (id: string) => {
+  return {
+    type: '多選題',
+    options: getInitOptions(id)
+  }
+}
+export const MultipleComponent = (props: MultipleProps) => {
+  const context = useContext(MyContext)
+  const { components, utility } = context
   const { icons } = utility
   const { IconDeleteOutline } = icons
   const { formItems, btnItems } = components
@@ -161,5 +168,3 @@ export const MultipleComponent = (
     </>
   )
 }
-
-MultipleComponent.displayName = 'MultipleComponent'

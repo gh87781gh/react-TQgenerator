@@ -1,17 +1,15 @@
-import { EssayProps, TQgeneratorProps } from '../types'
+import { useContext } from 'react'
+import { EssayProps } from '../types'
+import { MyContext } from '../TQgenerator'
 
 export const initEssay: Pick<EssayProps, 'type' | 'answer'> = {
   type: '問答題',
   answer: ''
 }
 
-export const EssayComponent = (
-  props: EssayProps & {
-    components: TQgeneratorProps['components']
-    utility: TQgeneratorProps['utility']
-  }
-) => {
-  const { components } = props
+export const EssayComponent = (props: EssayProps) => {
+  const context = useContext(MyContext)
+  const { components } = context
   const { formItems } = components
   const { Label, Textarea } = formItems
   const editAnswer = (value: string) => {
@@ -21,7 +19,7 @@ export const EssayComponent = (
     <>
       {props.mode === 'test' && (
         <>
-          <Label>建議答案</Label>
+          <Label>解析</Label>
           <Textarea
             disabled={!props.isEdit}
             value={props.answer}
@@ -32,5 +30,3 @@ export const EssayComponent = (
     </>
   )
 }
-
-EssayComponent.displayName = 'EssayComponent'
