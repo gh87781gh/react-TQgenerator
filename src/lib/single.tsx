@@ -1,6 +1,7 @@
 import { useContext } from 'react'
 import { SingleProps } from '../types'
 import { MyContext } from '../TQgenerator'
+import { getOptionLabel } from '../utils'
 import styled from 'styled-components'
 
 const StyledOption = styled.div`
@@ -25,7 +26,6 @@ const StyledOption = styled.div`
   }
 `
 
-const answerOptions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 const getInitOptions: (id: string) => SingleProps['options'] = (id: string) => {
   let options: SingleProps['options'] = []
   for (let i = 0; i < 3; i++) {
@@ -58,7 +58,7 @@ export const SingleComponent = (props: SingleProps) => {
   const { BtnOutline, BtnText } = btnItems
 
   const editOptions = (
-    key: (typeof answerOptions)[number],
+    key: string,
     optionKey: 'label' | 'isCorrect' | 'score',
     value: string | boolean | number
   ) => {
@@ -99,11 +99,12 @@ export const SingleComponent = (props: SingleProps) => {
     })
     props.updateSection({ ...props, options: newOptions })
   }
+
   const renderOptions = (isEdit: boolean) => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
-          <div>{answerOptions[index]}</div>
+          <div>{getOptionLabel(index)}</div>
           <Input
             disabled={!isEdit}
             value={option.label}
@@ -158,7 +159,6 @@ export const SingleComponent = (props: SingleProps) => {
       )
     })
   }
-
   return (
     <>
       <Label>選項</Label>

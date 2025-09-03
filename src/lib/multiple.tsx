@@ -2,6 +2,7 @@ import { useContext } from 'react'
 import styled from 'styled-components'
 import { MultipleProps } from '../types'
 import { MyContext } from '../TQgenerator'
+import { getOptionLabel } from '../utils'
 
 const StyledOption = styled.div`
   display: flex;
@@ -26,7 +27,6 @@ const StyledOption = styled.div`
   }
 `
 
-const answerOptions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 const getInitOptions: (id: string) => MultipleProps['options'] = (
   id: string
 ) => {
@@ -60,7 +60,7 @@ export const MultipleComponent = (props: MultipleProps) => {
   const { Input, Label, InputNumber, Checkbox } = formItems
   const { BtnOutline, BtnText } = btnItems
   const editOptions = (
-    key: (typeof answerOptions)[number],
+    key: string,
     optionKey: 'label' | 'isCorrect' | 'score',
     value: string | boolean | number
   ) => {
@@ -101,7 +101,7 @@ export const MultipleComponent = (props: MultipleProps) => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
-          <div>{answerOptions[index]}</div>
+          <div>{getOptionLabel(index)}</div>
           <Input
             disabled={!isEdit}
             value={option.label}
