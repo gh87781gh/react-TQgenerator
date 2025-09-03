@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import packageJson from '../package.json'
@@ -43,9 +43,22 @@ const StyledTQgenerator = styled.div`
     background-color: var(--color-white);
     border-radius: 0.5rem;
     border: 1px solid var(--color-border-base);
+    transition: all 0.2s ease;
+    cursor: pointer;
 
     &:not(:last-child) {
       margin-bottom: calc(var(--gap-normal) * 2);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    }
+
+    &.editing {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
     }
   }
 
@@ -168,23 +181,11 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
   )
 }
 
-// SectionContent 組件
 interface SectionContentProps {
   section: SectionProps<TypeKeysType>
   index: number
   editSection: (id: string, data: Partial<SectionProps<TypeKeysType>>) => void
-  switchSectionStatus: (id: string) => void
   deleteSection: (id: string) => void
-  saveSection: (id: string, content: string) => void
-  onUploadImage: (image: string) => void
-  IconDrag: React.ComponentType<any>
-  IconDeleteOutline: React.ComponentType<any>
-  InputNumber: React.ComponentType<any>
-  BtnGroup: React.ComponentType<any>
-  BtnOutline: React.ComponentType<any>
-  BtnText: React.ComponentType<any>
-  Editor: React.ComponentType<any>
-  props: TQgeneratorProps
   dragHandleProps?: {
     onPointerDown?: (event: React.PointerEvent) => void
     onMouseDown?: (event: React.MouseEvent) => void
@@ -197,22 +198,44 @@ const SectionContent: React.FC<SectionContentProps> = ({
   section,
   index,
   editSection,
-  switchSectionStatus,
   deleteSection,
-  saveSection,
-  onUploadImage,
-  IconDrag,
-  IconDeleteOutline,
-  InputNumber,
-  BtnGroup,
-  BtnOutline,
-  BtnText,
-  Editor,
-  props,
   dragHandleProps
 }) => {
+  const context = useContext(MyContext)
+  const { utility, components } = context
+  const { icons } = utility
+  const { IconDrag, IconDeleteOutline } = icons
+  const { formItems, btnItems, editor } = components
+  const { InputNumber } = formItems
+  const { BtnGroup, BtnText } = btnItems
+  const { component: Editor, onUploadImage } = editor
+
+  const handleFocus = () => {
+    if (!section.isEdit) {
+      // 聚焦時自動進入編輯模式，同時讓其他 section 離開編輯模式
+      editSection(section.id, { isEdit: true })
+    }
+  }
+
+  const handleBlur = (event: React.FocusEvent) => {
+    // 檢查新的焦點目標是否仍在此 section 內
+    if (event.currentTarget.contains(event.relatedTarget as Node)) {
+      return // 焦點仍在 section 內，不做任何處理
+    }
+
+    // 失焦時自動離開編輯模式（資料已經即時更新）
+    if (section.isEdit) {
+      editSection(section.id, { isEdit: false })
+    }
+  }
+
   return (
-    <div className='section'>
+    <div
+      className={`section ${section.isEdit ? 'editing' : ''}`}
+      tabIndex={0}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+    >
       <div className='section-title'>
         <div className='section-title-drag' {...dragHandleProps}>
           <IconDrag />
@@ -222,7 +245,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
           [ {section.type} ]
         </span>
         <span>
-          {props.mode === 'test' && (
+          {context.mode === 'test' && (
             <>
               <span style={{ marginRight: '0.5rem' }}>得分</span>
               <InputNumber
@@ -237,24 +260,15 @@ const SectionContent: React.FC<SectionContentProps> = ({
             </>
           )}
         </span>
-        {!section.isEdit && (
-          <BtnGroup className='clearfix' style={{ float: 'right' }}>
-            <BtnOutline
-              key='edit'
-              size='small'
-              onClick={() => switchSectionStatus(section.id)}
-            >
-              編輯
-            </BtnOutline>
-            <BtnText
-              key='delete'
-              theme='danger'
-              onClick={() => deleteSection(section.id)}
-            >
-              <IconDeleteOutline />
-            </BtnText>
-          </BtnGroup>
-        )}
+        <BtnGroup className='clearfix' style={{ float: 'right' }}>
+          <BtnText
+            key='delete'
+            theme='danger'
+            onClick={() => deleteSection(section.id)}
+          >
+            <IconDeleteOutline />
+          </BtnText>
+        </BtnGroup>
       </div>
       <div className='section-body'>
         {section.isEdit ? (
@@ -263,8 +277,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
               title=''
               height={200}
               value={section.question}
-              onSave={(content: string) => {
-                saveSection(section.id, content)
+              onChange={(content: string) => {
+                // 即時更新 section 的 question 內容
+                editSection(section.id, { question: content })
               }}
               onUploadImage={onUploadImage}
             />
@@ -338,12 +353,9 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     return null
   }
 
-  const { icons } = utility
-  const { IconDrag, IconDeleteOutline } = icons
-  const { formItems, btnItems, editor } = components
-  const { InputNumber, Select } = formItems
-  const { BtnPrimary, BtnGroup, BtnOutline, BtnText } = btnItems
-  const { component: Editor, onUploadImage } = editor
+  const { formItems, btnItems } = components
+  const { Select } = formItems
+  const { BtnPrimary } = btnItems
 
   const [type, setType] = useState<TypeKeysType>('是非題')
   const addSection = (type: TypeKeysType) => {
@@ -385,45 +397,29 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     ] as SectionProps<TypeKeysType>[]
     setSections?.(newSections)
   }
-  const switchSectionStatus = (id: string) => {
-    const currentStatus = sections.find((section) => section.id === id)?.isEdit
-    let newSections: SectionProps<TypeKeysType>[]
-    if (currentStatus) {
-      newSections = sections.map((section) =>
-        section.id === id ? { ...section, isEdit: false } : section
-      )
-    } else {
-      newSections = sections.map((section) =>
-        section.id === id
-          ? { ...section, isEdit: true }
-          : { ...section, isEdit: false }
-      )
-    }
-    setSections?.(newSections)
-  }
+  // switchSectionStatus 函數已移除，改用自動焦點管理
   const editSection = (
     id: string,
     data: Partial<SectionProps<TypeKeysType>>
   ) => {
-    const newSections = sections.map((section) =>
-      section.id === id ? { ...section, ...data } : section
-    )
+    const newSections = sections.map((section) => {
+      if (section.id === id) {
+        return { ...section, ...data }
+      } else if (data.isEdit === true) {
+        // 如果要設定某個 section 為編輯模式，確保其他 section 都離開編輯模式
+        return { ...section, isEdit: false }
+      } else {
+        return section
+      }
+    })
     setSections?.(newSections as SectionProps<TypeKeysType>[])
   }
   const deleteSection = (id: string) => {
     const newSections = sections.filter((section) => section.id !== id)
     setSections?.(newSections)
   }
-  const saveSection = (id: string, content: string) => {
-    const newSections = sections.map((section) =>
-      section.id === id
-        ? { ...section, question: content, isEdit: false }
-        : section
-    )
-    setSections?.(newSections)
-  }
+  // saveSection 函數已移除，改用即時更新
 
-  // Drag and Drop 相關設定
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
       distance: 10
@@ -434,7 +430,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       distance: 10
     }
   })
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
 
@@ -468,7 +463,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         })
       : []
   }
-
   return (
     <MyContext.Provider
       value={{
@@ -497,35 +491,26 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                     section={section}
                     index={index}
                     editSection={editSection}
-                    switchSectionStatus={switchSectionStatus}
                     deleteSection={deleteSection}
-                    saveSection={saveSection}
-                    onUploadImage={onUploadImage}
-                    IconDrag={IconDrag}
-                    IconDeleteOutline={IconDeleteOutline}
-                    InputNumber={InputNumber}
-                    BtnGroup={BtnGroup}
-                    BtnOutline={BtnOutline}
-                    BtnText={BtnText}
-                    Editor={Editor}
-                    props={props}
                   />
                 </SortableItem>
               )
             })}
           </SortableContext>
         </DndContext>
-        <div className='section-body-add'>
-          <Select
-            allowClear={false}
-            options={getOptions()}
-            value={type}
-            onChange={(value: any) => {
-              setType(value as TypeKeysType)
-            }}
-          />
-          <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
-        </div>
+        {role === 'editor' && status === 'editing' && (
+          <div className='section-body-add'>
+            <Select
+              allowClear={false}
+              options={getOptions()}
+              value={type}
+              onChange={(value: any) => {
+                setType(value as TypeKeysType)
+              }}
+            />
+            <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
+          </div>
+        )}
         <div className='version'>v{packageJson.version}</div>
       </StyledTQgenerator>
     </MyContext.Provider>
