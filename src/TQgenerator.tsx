@@ -307,8 +307,11 @@ const SectionContent: React.FC<SectionContentProps> = ({
               title=''
               height={200}
               value={section.question}
-              onChange={(content: string) => {
-                // 即時更新 section 的 question 內容
+              onSave={(
+                content: string
+                // setIsLoading: (value: boolean) => void,
+                // contentH: number | null
+              ) => {
                 editSection(section.id, { question: content })
               }}
               onUploadImage={onUploadImage}
