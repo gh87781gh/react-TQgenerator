@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useRef, useEffect } from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import packageJson from '../package.json'
@@ -210,7 +210,16 @@ const SectionContent: React.FC<SectionContentProps> = ({
   const { BtnGroup, BtnText } = btnItems
   const { component: Editor, onUploadImage } = editor
 
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const blurTimeoutRef = useRef<number | null>(null)
+
   const handleFocus = () => {
+    // 清除任何待執行的失焦處理
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current)
+      blurTimeoutRef.current = null
+    }
+
     if (!section.isEdit) {
       // 聚焦時自動進入編輯模式，同時讓其他 section 離開編輯模式
       editSection(section.id, { isEdit: true })
@@ -219,18 +228,39 @@ const SectionContent: React.FC<SectionContentProps> = ({
 
   const handleBlur = (event: React.FocusEvent) => {
     // 檢查新的焦點目標是否仍在此 section 內
-    if (event.currentTarget.contains(event.relatedTarget as Node)) {
+    const relatedTarget = event.relatedTarget as Node
+    if (relatedTarget && event.currentTarget.contains(relatedTarget)) {
       return // 焦點仍在 section 內，不做任何處理
     }
 
-    // 失焦時自動離開編輯模式（資料已經即時更新）
-    if (section.isEdit) {
-      editSection(section.id, { isEdit: false })
-    }
+    // 延遲檢查，給 Editor 組件和其他元素時間完成焦點設置
+    blurTimeoutRef.current = setTimeout(() => {
+      // 檢查當前 document.activeElement 是否在此 section 內
+      const activeElement = document.activeElement
+      if (activeElement && sectionRef.current?.contains(activeElement)) {
+        return // 焦點實際上仍在 section 內
+      }
+
+      // 確認 section 仍處於編輯狀態才執行失焦邏輯
+      if (section.isEdit) {
+        editSection(section.id, { isEdit: false })
+      }
+      blurTimeoutRef.current = null
+    }, 50) // 增加延遲時間，給 Editor 更多時間初始化
   }
+
+  // 清理 timeout
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current)
+      }
+    }
+  }, [])
 
   return (
     <div
+      ref={sectionRef}
       className={`section ${section.isEdit ? 'editing' : ''}`}
       tabIndex={0}
       onFocus={handleFocus}
