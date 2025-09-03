@@ -12,13 +12,13 @@ interface BaseSectionProps {
   question: string
   isEdit: boolean
   updateSection: (section: SectionProps<TypeKeysType>) => void
-  score?: number
+  score?: number // only for test mode
 }
 export const initBaseSection: Omit<BaseSectionProps, 'id' | 'mode'> = {
   isEdit: true,
   question: '',
   updateSection: () => { },
-  score: 0
+  score: 0 // only for test mode
 }
 
 export interface TrueFalseProps extends BaseSectionProps {
@@ -29,6 +29,7 @@ export interface TrueFalseProps extends BaseSectionProps {
     label: string
     value: string
     isCorrect: boolean
+    isChecked: boolean
   }[]
 }
 
@@ -40,6 +41,7 @@ export interface SingleProps extends BaseSectionProps {
     value: string
     isCorrect: boolean
     score: number
+    isChecked?: boolean
   }[]
 }
 
@@ -51,6 +53,7 @@ export interface MultipleProps extends BaseSectionProps {
     value: string
     isCorrect: boolean
     score: number
+    isChecked?: boolean
   }[]
 }
 
@@ -64,11 +67,13 @@ export interface FieldProps<T extends FieldAnswerKeys> extends BaseSectionProps 
   type: '填充題'
   answerType: T
   answer: FieldAnswerMap[T]
+  response: FieldAnswerMap[T]
 }
 
 export interface EssayProps extends BaseSectionProps {
   type: '問答題'
   answer: string
+  response: string
 }
 
 export interface RatingProps extends BaseSectionProps {
@@ -98,6 +103,8 @@ export type TQgeneratorProps = {
   setStatus?: (status: StatusType) => void
   sections: SectionProps<TypeKeysType>[]
   setSections?: (sections: SectionProps<TypeKeysType>[]) => void
+  totalScore?: number
+  setTotalScore?: (totalScore: number) => void
 
   components: {
     formItems: {
@@ -108,6 +115,7 @@ export type TQgeneratorProps = {
       Label: React.ComponentType<any>
       Checkbox: React.ComponentType<any>
       Textarea: React.ComponentType<any>
+      DatePicker: React.ComponentType<any>
     },
     btnItems: {
       BtnGroup: React.ComponentType<any>

@@ -3,10 +3,23 @@ import { TrueFalseProps } from '../types'
 import { MyContext } from '../TQgenerator'
 import styled from 'styled-components'
 
-const StyledOption = styled.div`
+const StyledEditingOption = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  &:not(:last-child) {
+    margin-bottom: var(--gap-small);
+  }
+
+  > *:not(:last-child) {
+    margin-right: var(--gap-normal);
+  }
+`
+const StyledOption = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 
   &:not(:last-child) {
     margin-bottom: var(--gap-small);
@@ -28,7 +41,8 @@ const getInitOptions: (id: string) => TrueFalseProps['options'] = (
       key,
       label: '',
       value: key,
-      isCorrect: false
+      isCorrect: false,
+      isChecked: false
     })
   }
   return options
@@ -51,7 +65,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
 
   const editOptions = (
     key: string,
-    optionKey: 'label' | 'isCorrect',
+    optionKey: 'label' | 'isCorrect' | 'isChecked',
     value: string | boolean | number
   ) => {
     const { options } = props
@@ -61,20 +75,24 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
           option.isCorrect = value as boolean
         } else if (optionKey === 'label') {
           option.label = value as string
+        } else if (optionKey === 'isChecked') {
+          option.isChecked = value as boolean
         }
       } else {
         if (optionKey === 'isCorrect') {
           option.isCorrect = false
+        } else if (optionKey === 'isChecked') {
+          option.isChecked = false
         }
       }
       return option
     })
     props.updateSection({ ...props, options: newOptions })
   }
-  const renderOptions = (isEdit: boolean) => {
+  const renderEditingOptions = (isEdit: boolean) => {
     return props.options.map((option, index) => {
       return (
-        <StyledOption key={option.key}>
+        <StyledEditingOption key={option.key}>
           <div>{answerOptions[index]}</div>
           <Input
             disabled={!isEdit}
@@ -96,6 +114,26 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
               </Radio>
             </div>
           )}
+        </StyledEditingOption>
+      )
+    })
+  }
+  const renderStaticOptions = () => {
+    return props.options.map((option, index) => {
+      return (
+        <StyledOption key={option.key}>
+          <div>{answerOptions[index]}</div>
+          <div>{option.label}</div>
+          {props.mode === 'test' && (
+            <div style={{ width: '200px' }}>
+              <Radio
+                checked={option.isChecked}
+                onChange={() =>
+                  editOptions(option.key, 'isChecked', !option.isChecked)
+                }
+              />
+            </div>
+          )}
         </StyledOption>
       )
     })
@@ -104,7 +142,9 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
   return (
     <>
       <Label>選項</Label>
-      {renderOptions(props.isEdit)}
+      {context.status === 'editing'
+        ? renderEditingOptions(props.isEdit)
+        : renderStaticOptions()}
     </>
   )
 }

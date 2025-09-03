@@ -2,20 +2,22 @@ import { useContext } from 'react'
 import { EssayProps } from '../types'
 import { MyContext } from '../TQgenerator'
 
-export const initEssay: Pick<EssayProps, 'type' | 'answer'> = {
+export const initEssay: Pick<EssayProps, 'type' | 'answer' | 'response'> = {
   type: '問答題',
-  answer: ''
+  answer: '',
+  response: ''
 }
 
 export const EssayComponent = (props: EssayProps) => {
   const context = useContext(MyContext)
   const { components } = context
   const { formItems } = components
-  const { Label, Textarea } = formItems
-  const editAnswer = (value: string) => {
-    props.updateSection({ ...props, answer: value })
+  const { Label, Textarea, Input } = formItems
+  const update = (key: string, value: string | number) => {
+    props.updateSection({ ...props, [key]: value })
   }
-  return (
+
+  const renderEditingMode = () => (
     <>
       {props.mode === 'test' && (
         <>
@@ -23,10 +25,30 @@ export const EssayComponent = (props: EssayProps) => {
           <Textarea
             disabled={!props.isEdit}
             value={props.answer}
-            onChange={(e: any) => editAnswer(e.target.value)}
+            onChange={(e: any) => update('answer', e.target.value)}
           />
         </>
       )}
+    </>
+  )
+
+  const renderStaticMode = () => (
+    <>
+      {props.mode === 'test' && (
+        <>
+          <Label>答案</Label>
+          <Input
+            value={props.response}
+            onChange={(e: any) => update('response', e.target.value)}
+          />
+        </>
+      )}
+    </>
+  )
+
+  return (
+    <>
+      {context.status === 'editing' ? renderEditingMode() : renderStaticMode()}
     </>
   )
 }

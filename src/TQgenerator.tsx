@@ -1,4 +1,10 @@
-import React, { useContext, useState, useRef, useEffect } from 'react'
+import React, {
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  useCallback
+} from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import packageJson from '../package.json'
@@ -274,34 +280,34 @@ const SectionContent: React.FC<SectionContentProps> = ({
         <span style={{ color: 'var(--color-disabled-icon)' }}>
           [ {section.type} ]
         </span>
-        <span>
-          {context.mode === 'test' && (
-            <>
-              <span style={{ marginRight: '0.5rem' }}>得分</span>
-              <InputNumber
-                style={{ width: '100px', marginRight: '1rem' }}
-                value={section.score}
-                precision={0}
-                min={0}
-                onChange={(value: any) =>
-                  editSection(section.id, { score: Number(value) || 0 })
-                }
-              />
-            </>
-          )}
-        </span>
-        <BtnGroup className='clearfix' style={{ float: 'right' }}>
-          <BtnText
-            key='delete'
-            theme='danger'
-            onClick={() => deleteSection(section.id)}
-          >
-            <IconDeleteOutline />
-          </BtnText>
-        </BtnGroup>
+        {context.status === 'editing' && context.mode === 'test' && (
+          <>
+            <span style={{ marginRight: '0.5rem' }}>得分</span>
+            <InputNumber
+              style={{ width: '100px', marginRight: '1rem' }}
+              value={section.score}
+              precision={0}
+              min={0}
+              onChange={(value: any) =>
+                editSection(section.id, { score: Number(value) || 0 })
+              }
+            />
+          </>
+        )}
+        {context.status === 'editing' && (
+          <BtnGroup className='clearfix' style={{ float: 'right' }}>
+            <BtnText
+              key='delete'
+              theme='danger'
+              onClick={() => deleteSection(section.id)}
+            >
+              <IconDeleteOutline />
+            </BtnText>
+          </BtnGroup>
+        )}
       </div>
       <div className='section-body'>
-        {section.isEdit ? (
+        {context.status === 'editing' && section.isEdit ? (
           <div className='section-body-question active'>
             <Editor
               title=''
@@ -379,8 +385,18 @@ const SectionContent: React.FC<SectionContentProps> = ({
 }
 
 const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
-  const { mode, role, status, sections, setSections, components, utility } =
-    props
+  const {
+    mode,
+    role,
+    status,
+    setStatus,
+    sections,
+    setSections,
+    totalScore,
+    setTotalScore,
+    components,
+    utility
+  } = props
 
   if (!mode || !role || !status) {
     return null
@@ -389,7 +405,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   const { formItems, btnItems } = components
   const { Select } = formItems
   const { BtnPrimary } = btnItems
-
   const [type, setType] = useState<TypeKeysType>('是非題')
   const addSection = (type: TypeKeysType) => {
     const currentSections = sections.map((section) => {
@@ -430,7 +445,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     ] as SectionProps<TypeKeysType>[]
     setSections?.(newSections)
   }
-  // switchSectionStatus 函數已移除，改用自動焦點管理
   const editSection = (
     id: string,
     data: Partial<SectionProps<TypeKeysType>>
@@ -451,7 +465,53 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     const newSections = sections.filter((section) => section.id !== id)
     setSections?.(newSections)
   }
-  // saveSection 函數已移除，改用即時更新
+  const onSubmitTest = useCallback(() => {
+    let totalScore = 0
+    sections.forEach((section) => {
+      if (section.type === '是非題') {
+        const correctOption = section.options.find(
+          (option) => option.isCorrect && option.isChecked
+        )
+        if (correctOption) {
+          totalScore += section.score || 0
+        }
+      } else if (section.type === '單選題') {
+        const correctOption = section.options.find(
+          (option) => option.isCorrect && option.isChecked
+        )
+        if (correctOption) {
+          totalScore += section.score || 0
+        }
+      } else if (section.type === '多選題') {
+        const correctedItems = section.options.filter(
+          (option) => option.isCorrect
+        )
+        const correctedItemsKeys = correctedItems.map((option) => option.key)
+        const checkedItems = section.options.filter(
+          (option) => option.isChecked
+        )
+        const checkedItemsKeys = checkedItems.map((option) => option.key)
+        const intersectionKeys = correctedItemsKeys.filter((key) =>
+          checkedItemsKeys.includes(key)
+        )
+        if (intersectionKeys.length === correctedItemsKeys.length) {
+          totalScore += section.score || 0
+        }
+      } else if (section.type === '填充題') {
+        // TOCHECK 無法自動閱卷
+      } else if (section.type === '問答題') {
+        // TOCHECK 無法自動閱卷
+      }
+
+      return section
+    })
+    setStatus?.('waiting_for_correct')
+    setTotalScore?.(totalScore)
+  }, [sections])
+  const onSubmitQuestionnaire = useCallback(() => {
+    // TODO
+    console.log('submit', sections)
+  }, [sections])
 
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
@@ -544,6 +604,25 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
           </div>
         )}
+        {status === 'waiting_for_response' && (
+          <div className='section-body-add'>
+            <BtnPrimary
+              onClick={() =>
+                mode === 'test'
+                  ? onSubmitTest()
+                  : mode === 'questionnaire'
+                  ? onSubmitQuestionnaire()
+                  : console.error('Invalid Mode')
+              }
+            >
+              提交測驗
+            </BtnPrimary>
+          </div>
+        )}
+        {status === 'waiting_for_correct' && (
+          <div style={{ textAlign: 'center' }}>總得分：{totalScore}</div>
+        )}
+
         <div className='version'>v{packageJson.version}</div>
       </StyledTQgenerator>
     </MyContext.Provider>

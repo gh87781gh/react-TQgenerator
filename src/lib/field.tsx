@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import styled from 'styled-components'
-import { FieldProps, FieldAnswerKeys, FieldAnswerMap } from '../types'
+import { FieldProps, FieldAnswerKeys } from '../types'
 import { MyContext } from '../TQgenerator'
 
 const StyledAnswerType = styled.div`
@@ -17,25 +17,23 @@ const AnswerTypeMap: Record<FieldAnswerKeys, string> = {
 }
 export const initField: Pick<
   FieldProps<FieldAnswerKeys>,
-  'type' | 'answerType' | 'answer'
+  'type' | 'answerType' | 'answer' | 'response'
 > = {
   type: '填充題',
   answerType: 'input',
-  answer: ''
+  answer: '',
+  response: ''
 }
 
 export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
   const context = useContext(MyContext)
   const { components } = context
   const { formItems } = components
-  const { Label, Radio, Textarea } = formItems
-  const editAnswerType = (value: FieldAnswerKeys) => {
-    props.updateSection({ ...props, answerType: value })
+  const { Label, Radio, Textarea, Input, InputNumber, DatePicker } = formItems
+  const update = (key: string, value: string | number) => {
+    props.updateSection({ ...props, [key]: value })
   }
-  const editAnswer = (value: FieldAnswerMap[FieldAnswerKeys]) => {
-    props.updateSection({ ...props, answer: value })
-  }
-  return (
+  const renderEditingMode = () => (
     <>
       <Label>選項</Label>
       <StyledAnswerType>
@@ -45,7 +43,7 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
               disabled={!props.isEdit}
               key={key}
               checked={props.answerType === key}
-              onChange={() => editAnswerType(key as FieldAnswerKeys)}
+              onChange={() => update('answerType', key as FieldAnswerKeys)}
             >
               {AnswerTypeMap[key as FieldAnswerKeys]}
             </Radio>
@@ -57,40 +55,43 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
           <Label>解析</Label>
           <Textarea
             disabled={!props.isEdit}
-            value={(props.answer as FieldAnswerMap[FieldAnswerKeys]) || ''}
-            onChange={(e: any) => editAnswer(e.target.value)}
+            value={props.answer}
+            onChange={(e: any) => update('answer', e.target.value)}
           />
         </>
       )}
+    </>
+  )
 
-      {/* TODO 這是填寫者要用的 */}
-      {/* <div style={{ width: '300px' }}>
+  const renderStaticMode = () => (
+    <>
+      <Label>答案</Label>
+      <div style={{ width: '300px' }}>
         {props.answerType === 'input' && (
           <Input
-            disabled={!props.isEdit}
-            value={(props.answer as FieldAnswerMap['input']) || ''}
-            onChange={(e) => editAnswer(e.target.value)}
+            value={props.response}
+            onChange={(e: any) => update('response', e.target.value)}
           />
         )}
         {props.answerType === 'number' && (
           <InputNumber
-            disabled={!props.isEdit}
-            value={(props.answer as FieldAnswerMap['number']) || ''}
-            onChange={(value) => editAnswer(value)}
+            value={props.response}
+            onChange={(e: any) => update('response', e.target.value)}
           />
         )}
         {props.answerType === 'date' && (
           <DatePicker
-            disabled={!props.isEdit}
-            value={
-              (props.answer as FieldAnswerMap['date'])
-                ? dayjs(props.answer as FieldAnswerMap['date'])
-                : null
-            }
-            onChange={(day: Dayjs) => editAnswer(formatDate(day))}
+            value={props.response}
+            onChange={(e: any) => update('response', e.target.value)}
           />
         )}
-      </div> */}
+      </div>
+    </>
+  )
+
+  return (
+    <>
+      {context.status === 'editing' ? renderEditingMode() : renderStaticMode()}
     </>
   )
 }

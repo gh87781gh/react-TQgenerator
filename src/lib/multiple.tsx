@@ -4,7 +4,7 @@ import { MultipleProps } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils'
 
-const StyledOption = styled.div`
+const StyledEditingOption = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,6 +27,20 @@ const StyledOption = styled.div`
   }
 `
 
+const StyledOption = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  &:not(:last-child) {
+    margin-bottom: var(--gap-small);
+  }
+
+  > *:not(:last-child) {
+    margin-right: var(--gap-normal);
+  }
+`
+
 const getInitOptions: (id: string) => MultipleProps['options'] = (
   id: string
 ) => {
@@ -38,7 +52,8 @@ const getInitOptions: (id: string) => MultipleProps['options'] = (
       label: '',
       value: key,
       isCorrect: false,
-      score: 0
+      score: 0,
+      isChecked: false
     })
   }
   return options
@@ -61,7 +76,7 @@ export const MultipleComponent = (props: MultipleProps) => {
   const { BtnOutline, BtnText } = btnItems
   const editOptions = (
     key: string,
-    optionKey: 'label' | 'isCorrect' | 'score',
+    optionKey: 'label' | 'isCorrect' | 'score' | 'isChecked',
     value: string | boolean | number
   ) => {
     const { options } = props
@@ -73,6 +88,8 @@ export const MultipleComponent = (props: MultipleProps) => {
           option.label = value as string
         } else if (optionKey === 'score') {
           option.score = value as number
+        } else if (optionKey === 'isChecked') {
+          option.isChecked = value as boolean
         }
       }
       return option
@@ -93,14 +110,15 @@ export const MultipleComponent = (props: MultipleProps) => {
       label: '',
       value: key,
       isCorrect: false,
-      score: 0
+      score: 0,
+      isChecked: false
     })
     props.updateSection({ ...props, options: newOptions })
   }
-  const renderOptions = (isEdit: boolean) => {
+  const renderEditingOptions = (isEdit: boolean) => {
     return props.options.map((option, index) => {
       return (
-        <StyledOption key={option.key}>
+        <StyledEditingOption key={option.key}>
           <div>{getOptionLabel(index)}</div>
           <Input
             disabled={!isEdit}
@@ -152,6 +170,23 @@ export const MultipleComponent = (props: MultipleProps) => {
               </BtnText>
             )}
           </div>
+        </StyledEditingOption>
+      )
+    })
+  }
+
+  const renderStaticOptions = () => {
+    return props.options.map((option, index) => {
+      return (
+        <StyledOption key={option.key}>
+          <div>{getOptionLabel(index)}</div>
+          <div>{option.label}</div>
+          <Checkbox
+            checked={option.isChecked || false}
+            onChange={() =>
+              editOptions(option.key, 'isChecked', !option.isChecked)
+            }
+          />
         </StyledOption>
       )
     })
@@ -159,8 +194,10 @@ export const MultipleComponent = (props: MultipleProps) => {
   return (
     <>
       <Label>選項</Label>
-      {renderOptions(props.isEdit)}
-      {props.isEdit && (
+      {context.status === 'editing'
+        ? renderEditingOptions(props.isEdit)
+        : renderStaticOptions()}
+      {context.status === 'editing' && props.isEdit && (
         <BtnOutline size='small' onClick={() => addOption()}>
           新增選項
         </BtnOutline>

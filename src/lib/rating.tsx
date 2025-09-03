@@ -58,7 +58,7 @@ export const RatingComponent = (props: RatingProps) => {
     props.updateSection({ ...props, [key]: value })
   }
 
-  const renderClickButton = (props: RatingProps) => {
+  const renderClickButton = (props: RatingProps, isInteractive = false) => {
     if (
       props.max === undefined ||
       props.min === undefined ||
@@ -71,13 +71,21 @@ export const RatingComponent = (props: RatingProps) => {
       const rating = props.min! + index * props.ratingGap!
       if (rating > props.max!) return null
       return (
-        <Radio key={index} disabled={true}>
+        <Radio
+          key={index}
+          disabled={!isInteractive}
+          checked={isInteractive && props.rating === rating}
+          onChange={
+            isInteractive ? () => editRating('rating', rating) : undefined
+          }
+        >
           {rating}
         </Radio>
       )
     })
   }
-  return (
+
+  const renderEditingMode = () => (
     <>
       <Label>選項</Label>
       <StyledRatingType>
@@ -136,9 +144,33 @@ export const RatingComponent = (props: RatingProps) => {
           <span style={{ marginRight: 'var(--gap-normal)' }}>
             呈現按鈕範例：
           </span>
-          {renderClickButton(props)}
+          {renderClickButton(props, false)}
         </div>
       )}
+    </>
+  )
+
+  const renderStaticMode = () => (
+    <>
+      <Label>評分</Label>
+      {props.ratingType === 'number' ? (
+        <InputNumber
+          value={props.rating}
+          min={props.min}
+          max={props.max}
+          precision={0}
+          onChange={(value: any) => editRating('rating', Number(value) || 0)}
+          style={{ width: '150px' }}
+        />
+      ) : (
+        <StyledRatingType>{renderClickButton(props, true)}</StyledRatingType>
+      )}
+    </>
+  )
+
+  return (
+    <>
+      {context.status === 'editing' ? renderEditingMode() : renderStaticMode()}
     </>
   )
 }
