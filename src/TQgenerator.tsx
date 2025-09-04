@@ -1,10 +1,4 @@
-import React, {
-  useContext,
-  useState,
-  useRef,
-  useEffect,
-  useCallback
-} from 'react'
+import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import packageJson from '../package.json'
@@ -18,23 +12,27 @@ import type { DragEndEvent } from '@dnd-kit/core'
 import {
   arrayMove,
   verticalListSortingStrategy,
-  SortableContext,
-  useSortable
+  SortableContext
 } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 
 import {
   initBaseSection,
   SectionProps,
-  TypeKeysType,
+  TypeKeysEnum,
+  ModeEnum,
+  StatusEnum,
+  RoleEnum,
   TQgeneratorProps
 } from './types'
-import { initTrueFalse, TrueFalseComponent } from './lib/true-false'
-import { initSingle, SingleComponent } from './lib/single'
-import { initMultiple, MultipleComponent } from './lib/multiple'
-import { initField, FieldComponent } from './lib/field'
-import { initEssay, EssayComponent } from './lib/essay'
-import { initRating, RatingComponent } from './lib/rating'
+import { initTrueFalse } from './lib/true-false'
+import { initSingle } from './lib/single'
+import { initMultiple } from './lib/multiple'
+import { initField } from './lib/field'
+import { initEssay } from './lib/essay'
+import { initRating } from './lib/rating'
+
+import { SortableItem } from './SortableSection'
+import { SectionContent } from './SortableSection'
 
 const StyledTQgenerator = styled.div`
   width: 100%;
@@ -148,252 +146,31 @@ const StyledTQgenerator = styled.div`
 export type MyContextType = Omit<TQgeneratorProps, 'setRole' | 'setStatus'>
 export const MyContext = React.createContext<MyContextType>({} as MyContextType)
 
-// SortableItem 組件用於包裝每個可拖拉的 section
-interface SortableItemProps {
-  id: string
-  children: React.ReactElement<{
-    dragHandleProps?: {
-      onPointerDown?: (event: React.PointerEvent) => void
-      onMouseDown?: (event: React.MouseEvent) => void
-      onTouchStart?: (event: React.TouchEvent) => void
-      onKeyDown?: (event: React.KeyboardEvent) => void
-    }
-  }>
-}
-
-const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    marginBottom: '1rem'
-  }
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      {React.cloneElement(children as React.ReactElement, {
-        dragHandleProps: listeners
-      })}
-    </div>
-  )
-}
-
-interface SectionContentProps {
-  section: SectionProps<TypeKeysType>
-  index: number
-  editSection: (id: string, data: Partial<SectionProps<TypeKeysType>>) => void
-  deleteSection: (id: string) => void
-  dragHandleProps?: {
-    onPointerDown?: (event: React.PointerEvent) => void
-    onMouseDown?: (event: React.MouseEvent) => void
-    onTouchStart?: (event: React.TouchEvent) => void
-    onKeyDown?: (event: React.KeyboardEvent) => void
-  }
-}
-
-const SectionContent: React.FC<SectionContentProps> = ({
-  section,
-  index,
-  editSection,
-  deleteSection,
-  dragHandleProps
-}) => {
-  const context = useContext(MyContext)
-  const { utility, components } = context
-  const { icons } = utility
-  const { IconDrag, IconDeleteOutline } = icons
-  const { formItems, btnItems, editor } = components
-  const { InputNumber } = formItems
-  const { BtnGroup, BtnText } = btnItems
-  const { component: Editor, onUploadImage } = editor
-
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const blurTimeoutRef = useRef<number | null>(null)
-
-  const handleFocus = () => {
-    // 清除任何待執行的失焦處理
-    if (blurTimeoutRef.current) {
-      clearTimeout(blurTimeoutRef.current)
-      blurTimeoutRef.current = null
-    }
-
-    if (!section.isEdit) {
-      // 聚焦時自動進入編輯模式，同時讓其他 section 離開編輯模式
-      editSection(section.id, { isEdit: true })
-    }
-  }
-
-  const handleBlur = (event: React.FocusEvent) => {
-    // 檢查新的焦點目標是否仍在此 section 內
-    const relatedTarget = event.relatedTarget as Node
-    if (relatedTarget && event.currentTarget.contains(relatedTarget)) {
-      return // 焦點仍在 section 內，不做任何處理
-    }
-
-    // 延遲檢查，給 Editor 組件和其他元素時間完成焦點設置
-    blurTimeoutRef.current = setTimeout(() => {
-      // 檢查當前 document.activeElement 是否在此 section 內
-      const activeElement = document.activeElement
-      if (activeElement && sectionRef.current?.contains(activeElement)) {
-        return // 焦點實際上仍在 section 內
-      }
-
-      // 確認 section 仍處於編輯狀態才執行失焦邏輯
-      if (section.isEdit) {
-        editSection(section.id, { isEdit: false })
-      }
-      blurTimeoutRef.current = null
-    }, 50) // 增加延遲時間，給 Editor 更多時間初始化
-  }
-
-  // 清理 timeout
-  useEffect(() => {
-    return () => {
-      if (blurTimeoutRef.current) {
-        clearTimeout(blurTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  return (
-    <div
-      ref={sectionRef}
-      className={`section ${section.isEdit ? 'editing' : ''}`}
-      tabIndex={0}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-    >
-      <div className='section-title'>
-        <div className='section-title-drag' {...dragHandleProps}>
-          <IconDrag />
-        </div>
-        <span>題目 {index + 1}</span>
-        <span style={{ color: 'var(--color-disabled-icon)' }}>
-          [ {section.type} ]
-        </span>
-        {context.status === 'editing' && context.mode === 'test' && (
-          <>
-            <span style={{ marginRight: '0.5rem' }}>得分</span>
-            <InputNumber
-              style={{ width: '100px', marginRight: '1rem' }}
-              value={section.score}
-              precision={0}
-              min={0}
-              onChange={(value: any) =>
-                editSection(section.id, { score: Number(value) || 0 })
-              }
-            />
-          </>
-        )}
-        {context.status === 'editing' && (
-          <BtnGroup className='clearfix' style={{ float: 'right' }}>
-            <BtnText
-              key='delete'
-              theme='danger'
-              onClick={() => deleteSection(section.id)}
-            >
-              <IconDeleteOutline />
-            </BtnText>
-          </BtnGroup>
-        )}
-      </div>
-      <div className='section-body'>
-        {context.status === 'editing' && section.isEdit ? (
-          <div className='section-body-question active'>
-            <Editor
-              title=''
-              height={200}
-              value={section.question}
-              onSave={(
-                content: string
-                // setIsLoading: (value: boolean) => void,
-                // contentH: number | null
-              ) => {
-                editSection(section.id, { question: content })
-              }}
-              onUploadImage={onUploadImage}
-            />
-          </div>
-        ) : (
-          <div
-            className={`section-body-question ${!section.question && 'empty'}`}
-            dangerouslySetInnerHTML={{ __html: section.question }}
-          />
-        )}
-        <div className='section-body-question-option'>
-          {section.type === '是非題' && (
-            <TrueFalseComponent
-              {...section}
-              updateSection={(data: SectionProps<TypeKeysType>) =>
-                editSection(section.id, data)
-              }
-            />
-          )}
-          {section.type === '單選題' && (
-            <SingleComponent
-              {...section}
-              updateSection={(data: SectionProps<TypeKeysType>) =>
-                editSection(section.id, data)
-              }
-            />
-          )}
-          {section.type === '多選題' && (
-            <MultipleComponent
-              {...section}
-              updateSection={(data: SectionProps<TypeKeysType>) =>
-                editSection(section.id, data)
-              }
-            />
-          )}
-          {section.type === '填充題' && (
-            <FieldComponent
-              {...section}
-              updateSection={(data: SectionProps<TypeKeysType>) =>
-                editSection(section.id, data)
-              }
-            />
-          )}
-          {section.type === '問答題' && (
-            <EssayComponent
-              {...section}
-              updateSection={(data: SectionProps<TypeKeysType>) =>
-                editSection(section.id, data)
-              }
-            />
-          )}
-          {section.type === '評分題' && (
-            <RatingComponent
-              {...section}
-              updateSection={(data: SectionProps<TypeKeysType>) =>
-                editSection(section.id, data)
-              }
-            />
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
+const TypeKeysForTest = [
+  TypeKeysEnum.是非題,
+  TypeKeysEnum.單選題,
+  TypeKeysEnum.多選題,
+  TypeKeysEnum.填充題,
+  TypeKeysEnum.問答題
+]
+const TypeKeysForQuest = [
+  TypeKeysEnum.單選題,
+  TypeKeysEnum.多選題,
+  TypeKeysEnum.填充題,
+  TypeKeysEnum.問答題,
+  TypeKeysEnum.評分題
+]
 
 const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   const {
     mode,
     role,
     status,
-    setStatus,
+    // setStatus,
     sections,
     setSections,
     totalScore,
-    setTotalScore,
+    // setTotalScore,
     components,
     utility
   } = props
@@ -405,35 +182,44 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   const { formItems, btnItems } = components
   const { Select } = formItems
   const { BtnPrimary } = btnItems
-  const [type, setType] = useState<TypeKeysType>('是非題')
-  const addSection = (type: TypeKeysType) => {
+
+  // NOTE Section 資料處理
+  const [type, setType] = useState<TypeKeysEnum>(
+    mode === ModeEnum.test
+      ? TypeKeysForTest[0]
+      : mode === ModeEnum.questionnaire
+      ? TypeKeysForQuest[0]
+      : TypeKeysEnum.是非題 // TODO 應該要是null
+  )
+  const addSection = (type: TypeKeysEnum) => {
     const currentSections = sections.map((section) => {
       section.isEdit = false
       return section
     })
+
     const id = String(sections.length + 1)
-    let newItem: Partial<SectionProps<TypeKeysType>> = {
-      mode,
-      id,
-      ...initBaseSection
-    }
+
+    let newItem = { ...initBaseSection }
+    newItem.mode = mode as ModeEnum
+    newItem.id = id as string
+
     switch (type) {
-      case '是非題':
+      case TypeKeysEnum.是非題:
         newItem = { ...newItem, ...initTrueFalse(id) }
         break
-      case '單選題':
+      case TypeKeysEnum.單選題:
         newItem = { ...newItem, ...initSingle(id) }
         break
-      case '多選題':
+      case TypeKeysEnum.多選題:
         newItem = { ...newItem, ...initMultiple(id) }
         break
-      case '填充題':
+      case TypeKeysEnum.填充題:
         newItem = { ...newItem, ...initField }
         break
-      case '問答題':
+      case TypeKeysEnum.問答題:
         newItem = { ...newItem, ...initEssay }
         break
-      case '評分題':
+      case TypeKeysEnum.評分題:
         newItem = { ...newItem, ...initRating }
         break
       default:
@@ -442,77 +228,82 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     const newSections = [
       ...currentSections,
       { ...newItem }
-    ] as SectionProps<TypeKeysType>[]
+    ] as SectionProps<TypeKeysEnum>[]
     setSections?.(newSections)
   }
   const editSection = (
-    id: string,
-    data: Partial<SectionProps<TypeKeysType>>
+    id: string | null,
+    data: Partial<SectionProps<TypeKeysEnum>>
   ) => {
+    if (!id) return
+
     const newSections = sections.map((section) => {
       if (section.id === id) {
         return { ...section, ...data }
       } else if (data.isEdit === true) {
-        // 如果要設定某個 section 為編輯模式，確保其他 section 都離開編輯模式
         return { ...section, isEdit: false }
       } else {
         return section
       }
     })
-    setSections?.(newSections as SectionProps<TypeKeysType>[])
+    setSections?.(newSections as SectionProps<TypeKeysEnum>[])
   }
-  const deleteSection = (id: string) => {
+  const deleteSection = (id: string | null) => {
+    if (!id) return
+
     const newSections = sections.filter((section) => section.id !== id)
     setSections?.(newSections)
   }
   const onSubmitTest = useCallback(() => {
-    let totalScore = 0
-    sections.forEach((section) => {
-      if (section.type === '是非題') {
-        const correctOption = section.options.find(
-          (option) => option.isCorrect && option.isChecked
-        )
-        if (correctOption) {
-          totalScore += section.score || 0
-        }
-      } else if (section.type === '單選題') {
-        const correctOption = section.options.find(
-          (option) => option.isCorrect && option.isChecked
-        )
-        if (correctOption) {
-          totalScore += section.score || 0
-        }
-      } else if (section.type === '多選題') {
-        const correctedItems = section.options.filter(
-          (option) => option.isCorrect
-        )
-        const correctedItemsKeys = correctedItems.map((option) => option.key)
-        const checkedItems = section.options.filter(
-          (option) => option.isChecked
-        )
-        const checkedItemsKeys = checkedItems.map((option) => option.key)
-        const intersectionKeys = correctedItemsKeys.filter((key) =>
-          checkedItemsKeys.includes(key)
-        )
-        if (intersectionKeys.length === correctedItemsKeys.length) {
-          totalScore += section.score || 0
-        }
-      } else if (section.type === '填充題') {
-        // TOCHECK 無法自動閱卷
-      } else if (section.type === '問答題') {
-        // TOCHECK 無法自動閱卷
-      }
+    console.log('onSubmitTest')
+    // let totalScore = 0
+    // sections.forEach((section) => {
+    //   if (section.type === TypeKeysEnum.是非題) {
+    //     const correctOption = section.options.find(
+    //       (option) => option.isCorrect && option.isChecked
+    //     )
+    //     if (correctOption) {
+    //       totalScore += section.score || 0
+    //     }
+    //   } else if (section.type === TypeKeysEnum.單選題) {
+    //     const correctOption = section.options.find(
+    //       (option) => option.isCorrect && option.isChecked
+    //     )
+    //     if (correctOption) {
+    //       totalScore += section.score || 0
+    //     }
+    //   } else if (section.type === TypeKeysEnum.多選題) {
+    //     const correctedItems = section.options.filter(
+    //       (option) => option.isCorrect
+    //     )
+    //     const correctedItemsKeys = correctedItems.map((option) => option.key)
+    //     const checkedItems = section.options.filter(
+    //       (option) => option.isChecked
+    //     )
+    //     const checkedItemsKeys = checkedItems.map((option) => option.key)
+    //     const intersectionKeys = correctedItemsKeys.filter((key) =>
+    //       checkedItemsKeys.includes(key)
+    //     )
+    //     if (intersectionKeys.length === correctedItemsKeys.length) {
+    //       totalScore += section.score || 0
+    //     }
+    //   } else if (section.type === TypeKeysEnum.填充題) {
+    //     // TOCHECK 無法自動閱卷
+    //   } else if (section.type === TypeKeysEnum.問答題) {
+    //     // TOCHECK 無法自動閱卷
+    //   }
 
-      return section
-    })
-    setStatus?.('waiting_for_correct')
-    setTotalScore?.(totalScore)
+    //   return section
+    // })
+    // setStatus?.(StatusEnum.waiting_for_correct)
+    // setTotalScore?.(totalScore)
   }, [sections])
   const onSubmitQuestionnaire = useCallback(() => {
     // TODO
     console.log('submit', sections)
   }, [sections])
 
+  // NOTE DND
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
       distance: 10
@@ -536,9 +327,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }
 
   const getOptions = () => {
-    const TypeKeysForTest = ['是非題', '單選題', '多選題', '填充題', '問答題']
-    const TypeKeysForQuest = ['單選題', '多選題', '填充題', '問答題', '評分題']
-    return mode === 'test'
+    return mode === ModeEnum.test
       ? TypeKeysForTest.map((key) => {
           return {
             key,
@@ -546,7 +335,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             label: key
           }
         })
-      : mode === 'questionnaire'
+      : mode === ModeEnum.questionnaire
       ? TypeKeysForQuest.map((key) => {
           return {
             key,
@@ -574,43 +363,47 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={sections.map((section) => section.id)}
+            items={sections
+              .map((section) => section.id)
+              .filter((id): id is string => id !== null)}
             strategy={verticalListSortingStrategy}
           >
-            {sections.map((section, index) => {
-              return (
-                <SortableItem key={section.id} id={section.id}>
-                  <SectionContent
-                    section={section}
-                    index={index}
-                    editSection={editSection}
-                    deleteSection={deleteSection}
-                  />
-                </SortableItem>
-              )
-            })}
+            {sections
+              .filter((section) => section.id !== null)
+              .map((section, index) => {
+                return (
+                  <SortableItem key={section.id} id={section.id!}>
+                    <SectionContent
+                      section={section}
+                      index={index}
+                      editSection={editSection}
+                      deleteSection={deleteSection}
+                    />
+                  </SortableItem>
+                )
+              })}
           </SortableContext>
         </DndContext>
-        {role === 'editor' && status === 'editing' && (
+        {role === RoleEnum.editor && status === StatusEnum.editing && (
           <div className='section-body-add'>
             <Select
               allowClear={false}
               options={getOptions()}
               value={type}
               onChange={(value: any) => {
-                setType(value as TypeKeysType)
+                setType(value as TypeKeysEnum)
               }}
             />
             <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
           </div>
         )}
-        {status === 'waiting_for_response' && (
+        {status === StatusEnum.waiting_for_response && (
           <div className='section-body-add'>
             <BtnPrimary
               onClick={() =>
-                mode === 'test'
+                mode === ModeEnum.test
                   ? onSubmitTest()
-                  : mode === 'questionnaire'
+                  : mode === ModeEnum.questionnaire
                   ? onSubmitQuestionnaire()
                   : console.error('Invalid Mode')
               }
@@ -619,7 +412,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             </BtnPrimary>
           </div>
         )}
-        {status === 'waiting_for_correct' && (
+        {status === StatusEnum.waiting_for_correct && (
           <div style={{ textAlign: 'center' }}>總得分：{totalScore}</div>
         )}
         <div className='version'>v{packageJson.version}</div>

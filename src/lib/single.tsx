@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { SingleProps } from '../types'
+import { SingleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils'
 import styled from 'styled-components'
@@ -59,7 +59,7 @@ export const initSingle: (
   id: string
 ) => Pick<SingleProps, 'type' | 'options'> = (id: string) => {
   return {
-    type: '單選題',
+    type: TypeKeysEnum.單選題,
     options: getInitOptions(id)
   }
 }
@@ -133,7 +133,7 @@ export const SingleComponent = (props: SingleProps) => {
             }
           />
           <div className='option-result'>
-            {props.mode === 'test' && (
+            {props.mode === ModeEnum.test && (
               <Radio
                 disabled={!isEdit}
                 checked={option.isCorrect}
@@ -144,7 +144,7 @@ export const SingleComponent = (props: SingleProps) => {
                 正確答案
               </Radio>
             )}
-            {props.mode === 'questionnaire' && (
+            {props.mode === ModeEnum.questionnaire && (
               <>
                 <div
                   style={{
@@ -199,10 +199,10 @@ export const SingleComponent = (props: SingleProps) => {
   return (
     <>
       <Label>選項</Label>
-      {context.status === 'editing'
+      {context.status === StatusEnum.editing
         ? renderEditingOptions(props.isEdit)
         : renderStaticOptions()}
-      {context.status === 'editing' && props.isEdit && (
+      {context.status === StatusEnum.editing && props.isEdit && (
         <BtnOutline size='small' onClick={() => addOption()}>
           新增選項
         </BtnOutline>

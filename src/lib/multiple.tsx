@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import styled from 'styled-components'
-import { MultipleProps } from '../types'
+import { MultipleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils'
 
@@ -62,7 +62,7 @@ export const initMultiple: (
   id: string
 ) => Pick<MultipleProps, 'type' | 'options'> = (id: string) => {
   return {
-    type: '多選題',
+    type: TypeKeysEnum.多選題,
     options: getInitOptions(id)
   }
 }
@@ -128,7 +128,7 @@ export const MultipleComponent = (props: MultipleProps) => {
             }
           />
           <div className='option-result'>
-            {props.mode === 'test' && (
+            {props.mode === ModeEnum.test && (
               <Checkbox
                 disabled={!isEdit}
                 checked={option.isCorrect}
@@ -139,7 +139,7 @@ export const MultipleComponent = (props: MultipleProps) => {
                 正確答案
               </Checkbox>
             )}
-            {props.mode === 'questionnaire' && (
+            {props.mode === ModeEnum.questionnaire && (
               <>
                 <div
                   style={{
@@ -194,10 +194,10 @@ export const MultipleComponent = (props: MultipleProps) => {
   return (
     <>
       <Label>選項</Label>
-      {context.status === 'editing'
+      {context.status === StatusEnum.editing
         ? renderEditingOptions(props.isEdit)
         : renderStaticOptions()}
-      {context.status === 'editing' && props.isEdit && (
+      {context.status === StatusEnum.editing && props.isEdit && (
         <BtnOutline size='small' onClick={() => addOption()}>
           新增選項
         </BtnOutline>

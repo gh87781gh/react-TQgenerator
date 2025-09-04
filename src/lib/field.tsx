@@ -1,6 +1,12 @@
 import { useContext } from 'react'
 import styled from 'styled-components'
-import { FieldProps, FieldAnswerKeys } from '../types'
+import {
+  FieldProps,
+  FieldAnswerKeys,
+  TypeKeysEnum,
+  ModeEnum,
+  StatusEnum
+} from '../types'
 import { MyContext } from '../TQgenerator'
 
 const StyledAnswerType = styled.div`
@@ -19,7 +25,7 @@ export const initField: Pick<
   FieldProps<FieldAnswerKeys>,
   'type' | 'answerType' | 'answer' | 'response'
 > = {
-  type: '填充題',
+  type: TypeKeysEnum.填充題,
   answerType: 'input',
   answer: '',
   response: ''
@@ -50,7 +56,7 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
           )
         })}
       </StyledAnswerType>
-      {props.mode === 'test' && (
+      {props.mode === ModeEnum.test && (
         <>
           <Label>解析</Label>
           <Textarea
@@ -91,7 +97,9 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
 
   return (
     <>
-      {context.status === 'editing' ? renderEditingMode() : renderStaticMode()}
+      {context.status === StatusEnum.editing
+        ? renderEditingMode()
+        : renderStaticMode()}
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import styled from 'styled-components'
-import { RatingProps } from '../types'
+import { RatingProps, TypeKeysEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 
 const StyledRatingType = styled.div`
@@ -28,7 +28,7 @@ export const initRating: Pick<
   RatingProps,
   'type' | 'ratingType' | 'rating' | 'min' | 'max' | 'ratingGap'
 > = {
-  type: '評分題',
+  type: TypeKeysEnum.評分題,
   ratingType: 'number',
   rating: 0,
   min: 0,
@@ -170,7 +170,9 @@ export const RatingComponent = (props: RatingProps) => {
 
   return (
     <>
-      {context.status === 'editing' ? renderEditingMode() : renderStaticMode()}
+      {context.status === StatusEnum.editing
+        ? renderEditingMode()
+        : renderStaticMode()}
     </>
   )
 }

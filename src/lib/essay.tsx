@@ -1,9 +1,9 @@
 import { useContext } from 'react'
-import { EssayProps } from '../types'
+import { EssayProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 
 export const initEssay: Pick<EssayProps, 'type' | 'answer' | 'response'> = {
-  type: '問答題',
+  type: TypeKeysEnum.問答題,
   answer: '',
   response: ''
 }
@@ -19,7 +19,7 @@ export const EssayComponent = (props: EssayProps) => {
 
   const renderEditingMode = () => (
     <>
-      {props.mode === 'test' && (
+      {props.mode === ModeEnum.test && (
         <>
           <Label>解析</Label>
           <Textarea
@@ -34,7 +34,7 @@ export const EssayComponent = (props: EssayProps) => {
 
   const renderStaticMode = () => (
     <>
-      {props.mode === 'test' && (
+      {props.mode === ModeEnum.test && (
         <>
           <Label>答案</Label>
           <Input
@@ -48,7 +48,9 @@ export const EssayComponent = (props: EssayProps) => {
 
   return (
     <>
-      {context.status === 'editing' ? renderEditingMode() : renderStaticMode()}
+      {context.status === StatusEnum.editing
+        ? renderEditingMode()
+        : renderStaticMode()}
     </>
   )
 }

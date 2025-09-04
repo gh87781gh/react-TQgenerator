@@ -1,5 +1,5 @@
-import { useContext } from 'react'
-import { TrueFalseProps } from '../types'
+import { useContext, useCallback } from 'react'
+import { TrueFalseProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import styled from 'styled-components'
 
@@ -51,7 +51,7 @@ export const initTrueFalse: (
   id: string
 ) => Pick<TrueFalseProps, 'type' | 'boolean' | 'options'> = (id: string) => {
   return {
-    type: '是非題',
+    type: TypeKeysEnum.是非題,
     boolean: null,
     options: getInitOptions(id)
   }
@@ -89,22 +89,22 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
     })
     props.updateSection({ ...props, options: newOptions })
   }
-  const renderEditingOptions = (isEdit: boolean) => {
+  const renderOptionsEditing = useCallback(() => {
     return props.options.map((option, index) => {
       return (
         <StyledEditingOption key={option.key}>
           <div>{answerOptions[index]}</div>
           <Input
-            disabled={!isEdit}
+            disabled={!props.isEdit}
             value={option.label}
             onChange={(e: any) =>
               editOptions(option.key, 'label', e.target.value)
             }
           />
-          {props.mode === 'test' && (
+          {props.mode === ModeEnum.test && (
             <div style={{ width: '200px' }}>
               <Radio
-                disabled={!isEdit}
+                disabled={!props.isEdit}
                 checked={option.isCorrect}
                 onChange={() =>
                   editOptions(option.key, 'isCorrect', !option.isCorrect)
@@ -117,14 +117,14 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
         </StyledEditingOption>
       )
     })
-  }
-  const renderStaticOptions = () => {
+  }, [props])
+  const renderOptionsResponse = useCallback(() => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <div>{answerOptions[index]}</div>
           <div>{option.label}</div>
-          {props.mode === 'test' && (
+          {props.mode === ModeEnum.test && (
             <div style={{ width: '200px' }}>
               <Radio
                 checked={option.isChecked}
@@ -137,14 +137,18 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
         </StyledOption>
       )
     })
-  }
+  }, [props])
+
+  const renderOptions = {
+    [StatusEnum.editing]: renderOptionsEditing,
+    [StatusEnum.waiting_for_response]: renderOptionsResponse
+  } as const
 
   return (
     <>
       <Label>選項</Label>
-      {context.status === 'editing'
-        ? renderEditingOptions(props.isEdit)
-        : renderStaticOptions()}
+      {context.status &&
+        renderOptions[context.status as keyof typeof renderOptions]?.()}
     </>
   )
 }
