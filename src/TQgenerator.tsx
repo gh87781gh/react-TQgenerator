@@ -33,6 +33,8 @@ import { initRating } from './lib/rating'
 
 import { SortableItem } from './SortableSection'
 import { SectionContent } from './SortableSection'
+import { autoCorrectQuestionnaire } from './autoCorrect'
+import { autoCorrectTest } from './autoCorrect'
 
 const StyledTQgenerator = styled.div`
   width: 100%;
@@ -166,11 +168,11 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     mode,
     role,
     status,
-    // setStatus,
+    setStatus,
     sections,
     setSections,
     totalScore,
-    // setTotalScore,
+    setTotalScore,
     components,
     utility
   } = props
@@ -254,54 +256,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     const newSections = sections.filter((section) => section.id !== id)
     setSections?.(newSections)
   }
-  const onSubmitTest = useCallback(() => {
-    console.log('onSubmitTest')
-    // let totalScore = 0
-    // sections.forEach((section) => {
-    //   if (section.type === TypeKeysEnum.是非題) {
-    //     const correctOption = section.options.find(
-    //       (option) => option.isCorrect && option.isChecked
-    //     )
-    //     if (correctOption) {
-    //       totalScore += section.score || 0
-    //     }
-    //   } else if (section.type === TypeKeysEnum.單選題) {
-    //     const correctOption = section.options.find(
-    //       (option) => option.isCorrect && option.isChecked
-    //     )
-    //     if (correctOption) {
-    //       totalScore += section.score || 0
-    //     }
-    //   } else if (section.type === TypeKeysEnum.多選題) {
-    //     const correctedItems = section.options.filter(
-    //       (option) => option.isCorrect
-    //     )
-    //     const correctedItemsKeys = correctedItems.map((option) => option.key)
-    //     const checkedItems = section.options.filter(
-    //       (option) => option.isChecked
-    //     )
-    //     const checkedItemsKeys = checkedItems.map((option) => option.key)
-    //     const intersectionKeys = correctedItemsKeys.filter((key) =>
-    //       checkedItemsKeys.includes(key)
-    //     )
-    //     if (intersectionKeys.length === correctedItemsKeys.length) {
-    //       totalScore += section.score || 0
-    //     }
-    //   } else if (section.type === TypeKeysEnum.填充題) {
-    //     // TOCHECK 無法自動閱卷
-    //   } else if (section.type === TypeKeysEnum.問答題) {
-    //     // TOCHECK 無法自動閱卷
-    //   }
-
-    //   return section
-    // })
-    // setStatus?.(StatusEnum.waiting_for_correct)
-    // setTotalScore?.(totalScore)
-  }, [sections])
-  const onSubmitQuestionnaire = useCallback(() => {
-    // TODO
-    console.log('submit', sections)
-  }, [sections])
 
   // NOTE DND
   const mouseSensor = useSensor(MouseSensor, {
@@ -324,6 +278,51 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       const newSections = arrayMove(sections, oldIndex, newIndex)
       setSections?.(newSections)
     }
+  }
+
+  const renderActionEditing = useCallback(() => {
+    if (role !== RoleEnum.editor) return
+    return (
+      <div className='section-body-add'>
+        <Select
+          allowClear={false}
+          options={getOptions()}
+          value={type}
+          onChange={(value: any) => {
+            setType(value as TypeKeysEnum)
+          }}
+        />
+        <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
+      </div>
+    )
+  }, [role, type])
+  const renderActionResponse = useCallback(() => {
+    const submit = () => {
+      if (mode === ModeEnum.test) {
+        const totalScore = autoCorrectTest(sections)
+        console.log('totalScore', totalScore)
+      } else if (mode === ModeEnum.questionnaire) {
+        const totalScore = autoCorrectQuestionnaire(sections)
+        setTotalScore?.(totalScore)
+        setStatus?.(StatusEnum.waiting_for_correct)
+      } else {
+        console.error('Invalid Mode')
+      }
+    }
+
+    return (
+      <div className='section-body-add'>
+        <BtnPrimary onClick={() => submit()}>提交測驗</BtnPrimary>
+      </div>
+    )
+  }, [role, mode, sections])
+  const renderActionCorrect = useCallback(() => {
+    return <div style={{ textAlign: 'center' }}>總得分：{totalScore}</div>
+  }, [role, mode])
+  const renderAction = {
+    [StatusEnum.editing]: renderActionEditing,
+    [StatusEnum.waiting_for_response]: renderActionResponse,
+    [StatusEnum.waiting_for_correct]: renderActionCorrect
   }
 
   const getOptions = () => {
@@ -384,37 +383,9 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               })}
           </SortableContext>
         </DndContext>
-        {role === RoleEnum.editor && status === StatusEnum.editing && (
-          <div className='section-body-add'>
-            <Select
-              allowClear={false}
-              options={getOptions()}
-              value={type}
-              onChange={(value: any) => {
-                setType(value as TypeKeysEnum)
-              }}
-            />
-            <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
-          </div>
-        )}
-        {status === StatusEnum.waiting_for_response && (
-          <div className='section-body-add'>
-            <BtnPrimary
-              onClick={() =>
-                mode === ModeEnum.test
-                  ? onSubmitTest()
-                  : mode === ModeEnum.questionnaire
-                  ? onSubmitQuestionnaire()
-                  : console.error('Invalid Mode')
-              }
-            >
-              提交測驗
-            </BtnPrimary>
-          </div>
-        )}
-        {status === StatusEnum.waiting_for_correct && (
-          <div style={{ textAlign: 'center' }}>總得分：{totalScore}</div>
-        )}
+
+        {renderAction[status as keyof typeof renderAction]?.()}
+
         <div className='version'>v{packageJson.version}</div>
       </StyledTQgenerator>
     </MyContext.Provider>
