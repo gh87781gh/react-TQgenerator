@@ -622,7 +622,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         {status === 'waiting_for_correct' && (
           <div style={{ textAlign: 'center' }}>總得分：{totalScore}</div>
         )}
-
         <div className='version'>v{packageJson.version}</div>
       </StyledTQgenerator>
     </MyContext.Provider>
