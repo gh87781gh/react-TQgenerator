@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useCallback, useContext } from 'react'
 import { EssayProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 
@@ -13,44 +13,47 @@ export const EssayComponent = (props: EssayProps) => {
   const { components } = context
   const { formItems } = components
   const { Label, Textarea, Input } = formItems
-  const update = (key: string, value: string | number) => {
-    props.updateSection({ ...props, [key]: value })
-  }
 
-  const renderEditingMode = () => (
-    <>
-      {props.mode === ModeEnum.test && (
-        <>
-          <Label>解析</Label>
-          <Textarea
-            disabled={!props.isEdit}
-            value={props.answer}
-            onChange={(e: any) => update('answer', e.target.value)}
-          />
-        </>
-      )}
-    </>
+  const editSection = useCallback(
+    (key: string, value: string | number) => {
+      props.updateSection({ ...props, [key]: value })
+    },
+    [props]
+  )
+  const renderModeEditing = useCallback(
+    () => (
+      <>
+        <Label>解析</Label>
+        <Textarea
+          disabled={!props.isEdit}
+          value={props.answer}
+          onChange={(e: any) => editSection('answer', e.target.value)}
+        />
+      </>
+    ),
+    [props]
   )
 
-  const renderStaticMode = () => (
-    <>
-      {props.mode === ModeEnum.test && (
-        <>
-          <Label>答案</Label>
-          <Input
-            value={props.response}
-            onChange={(e: any) => update('response', e.target.value)}
-          />
-        </>
-      )}
-    </>
+  const renderModeResponse = useCallback(
+    () => (
+      <>
+        {props.mode === ModeEnum.test && (
+          <>
+            <Label>答案</Label>
+            <Input
+              value={props.response}
+              onChange={(e: any) => editSection('response', e.target.value)}
+            />
+          </>
+        )}
+      </>
+    ),
+    [props]
   )
 
-  return (
-    <>
-      {context.status === StatusEnum.editing
-        ? renderEditingMode()
-        : renderStaticMode()}
-    </>
-  )
+  const renderMode = {
+    [StatusEnum.editing]: renderModeEditing,
+    [StatusEnum.waiting_for_response]: renderModeResponse
+  } as const
+  return <>{renderMode[context.status as keyof typeof renderMode]?.()}</>
 }

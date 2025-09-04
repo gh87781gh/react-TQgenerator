@@ -1,5 +1,11 @@
-import { useCallback, useContext } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
+import dayjs from 'dayjs'
+import weekday from 'dayjs/plugin/weekday'
+import localeData from 'dayjs/plugin/localeData'
+dayjs.extend(weekday)
+dayjs.extend(localeData)
+
 import { MyContext } from '../TQgenerator'
 import {
   FieldProps,
@@ -36,6 +42,18 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
   const { components } = context
   const { formItems } = components
   const { Label, Radio, Textarea, Input, InputNumber, DatePicker } = formItems
+
+  const [responseDate, setResponseDate] = useState<dayjs.Dayjs | null>(
+    dayjs(props.response).isValid() ? dayjs(props.response) : null
+  )
+  useEffect(() => {
+    console.log('🟢 responseDate', responseDate)
+    if (!responseDate) return
+    props.updateSection({
+      ...props,
+      response: responseDate?.toISOString() || null
+    })
+  }, [responseDate])
 
   const editSection = useCallback(
     (key: string, value: string | number) => {
@@ -96,8 +114,8 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
         )}
         {props.answerType === 'date' && (
           <DatePicker
-            value={props.response}
-            onChange={(val: any) => editSection('response', val)}
+            value={responseDate} // 用本地state來存比較安全，避免render錯誤
+            onChange={(val: any) => setResponseDate(val)}
           />
         )}
       </div>
