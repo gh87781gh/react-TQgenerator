@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 export enum ModeEnum {
   test = 'test',
   questionnaire = 'questionnaire'
@@ -38,11 +40,11 @@ export const TypeKeys = Object.values(TypeKeysEnum)
 interface BaseSectionProps {
   id: string | null
   mode: ModeEnum | null
-  isEdit: boolean
+  isEdit: boolean // 在status=editing時，isEdit為各section可編輯與否的狀態
   updateSection: (section: SectionProps<TypeKeysEnum>) => void
   question: string // 問題
-  answer: string | number | null // 解析
-  response: string | number | null // 回答
+  answer: string | number | null | string[] | dayjs.Dayjs  // 解析
+  response: string | number | null | string[] | dayjs.Dayjs // 回答
   score: number // 分數
   finalScore: number //得分
 }
@@ -52,8 +54,8 @@ export const initBaseSection: BaseSectionProps = {
   isEdit: true,
   updateSection: () => { },
   question: '',
-  answer: '',
-  response: '',
+  answer: null,
+  response: null,
   score: 0,
   finalScore: 0
 }
@@ -65,7 +67,6 @@ export interface TrueFalseProps extends BaseSectionProps {
     key: string
     label: string
     value: string
-    isCorrect: boolean
     isChecked: boolean
   }[]
 }
@@ -76,9 +77,7 @@ export interface SingleProps extends BaseSectionProps {
     key: string
     label: string
     value: string
-    isCorrect: boolean
-    score: number
-    isChecked?: boolean
+    optionScore?: number
   }[]
 }
 
@@ -88,9 +87,7 @@ export interface MultipleProps extends BaseSectionProps {
     key: string
     label: string
     value: string
-    isCorrect: boolean
-    score: number
-    isChecked?: boolean
+    optionScore?: number
   }[]
 }
 
@@ -98,7 +95,7 @@ export type FieldAnswerKeys = 'input' | 'number' | 'date'
 export type FieldAnswerMap = {
   'input': string
   'number': number | null
-  'date': string | null
+  'date': dayjs.Dayjs | null
 }
 export interface FieldProps<T extends FieldAnswerKeys> extends Omit<BaseSectionProps, 'answer' | 'response'> {
   type: TypeKeysEnum.填充題

@@ -205,13 +205,13 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
 
     switch (type) {
       case TypeKeysEnum.是非題:
-        newItem = { ...newItem, ...initTrueFalse(id) }
+        newItem = { ...newItem, answer: '', response: '', ...initTrueFalse(id) }
         break
       case TypeKeysEnum.單選題:
-        newItem = { ...newItem, ...initSingle(id) }
+        newItem = { ...newItem, answer: '', response: '', ...initSingle(id) }
         break
       case TypeKeysEnum.多選題:
-        newItem = { ...newItem, ...initMultiple(id) }
+        newItem = { ...newItem, answer: [], response: [], ...initMultiple(id) }
         break
       case TypeKeysEnum.填充題:
         newItem = { ...newItem, ...initField }

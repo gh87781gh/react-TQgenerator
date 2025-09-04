@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useCallback } from 'react'
 import { SingleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils'
@@ -25,7 +25,6 @@ const StyledEditingOption = styled.div`
     justify-content: flex-end;
   }
 `
-
 const StyledOption = styled.div`
   display: flex;
   align-items: center;
@@ -48,9 +47,7 @@ const getInitOptions: (id: string) => SingleProps['options'] = (id: string) => {
       key,
       label: '',
       value: key,
-      isCorrect: false,
-      score: 0,
-      isChecked: false
+      optionScore: 0
     })
   }
   return options
@@ -72,40 +69,45 @@ export const SingleComponent = (props: SingleProps) => {
   const { Input, Label, Radio, InputNumber } = formItems
   const { BtnOutline, BtnText } = btnItems
 
-  const editOptions = (
-    key: string,
-    optionKey: 'label' | 'isCorrect' | 'score' | 'isChecked',
-    value: string | boolean | number
-  ) => {
-    const { options } = props
-    const newOptions = options.map((option) => {
-      if (option.key === key) {
-        if (optionKey === 'isCorrect') {
-          option.isCorrect = value as boolean
-        } else if (optionKey === 'label') {
-          option.label = value as string
-        } else if (optionKey === 'score') {
-          option.score = value as number
-        } else if (optionKey === 'isChecked') {
-          option.isChecked = value as boolean
+  const editOptions = useCallback(
+    (
+      optionKey: string,
+      key: 'label' | 'isChecked' | 'optionScore',
+      value?: string | boolean | number
+    ) => {
+      if (key === 'isChecked') {
+        let { answer, response } = props
+        if (context.status === StatusEnum.editing) {
+          answer = optionKey
         }
-      } else {
-        if (optionKey === 'isCorrect') {
-          option.isCorrect = false
-        } else if (optionKey === 'isChecked') {
-          option.isChecked = false
+        if (context.status === StatusEnum.waiting_for_response) {
+          response = optionKey
         }
+        props.updateSection({ ...props, answer, response })
       }
-      return option
-    })
-    props.updateSection({ ...props, options: newOptions })
-  }
-  const deleteOption = (key: string) => {
-    const { options } = props
-    const newOptions = options.filter((option) => option.key !== key)
-    props.updateSection({ ...props, options: newOptions })
-  }
-  const addOption = () => {
+
+      if (key === 'label' || key === 'optionScore') {
+        const { options } = props
+        const newOptions = options.map((option) => {
+          if (option.key === optionKey) {
+            return { ...option, [key]: value }
+          }
+          return option
+        })
+        props.updateSection({ ...props, options: newOptions })
+      }
+    },
+    [props, context]
+  )
+  const deleteOption = useCallback(
+    (key: string) => {
+      const { options } = props
+      const newOptions = options.filter((option) => option.key !== key)
+      props.updateSection({ ...props, options: newOptions })
+    },
+    [props]
+  )
+  const addOption = useCallback(() => {
     const { options } = props
     const newOptions = [...options]
     const key = new Date().getTime().toString()
@@ -113,20 +115,18 @@ export const SingleComponent = (props: SingleProps) => {
       key,
       label: '',
       value: key,
-      isCorrect: false,
-      score: 0,
-      isChecked: false
+      optionScore: 0
     })
     props.updateSection({ ...props, options: newOptions })
-  }
+  }, [props])
 
-  const renderEditingOptions = (isEdit: boolean) => {
+  const renderOptionsEditing = useCallback(() => {
     return props.options.map((option, index) => {
       return (
         <StyledEditingOption key={option.key}>
           <div>{getOptionLabel(index)}</div>
           <Input
-            disabled={!isEdit}
+            disabled={!props.isEdit}
             value={option.label}
             onChange={(e: any) =>
               editOptions(option.key, 'label', e.target.value)
@@ -135,11 +135,9 @@ export const SingleComponent = (props: SingleProps) => {
           <div className='option-result'>
             {props.mode === ModeEnum.test && (
               <Radio
-                disabled={!isEdit}
-                checked={option.isCorrect}
-                onChange={() =>
-                  editOptions(option.key, 'isCorrect', !option.isCorrect)
-                }
+                disabled={!props.isEdit}
+                checked={option.key === props.answer}
+                onChange={() => editOptions(option.key, 'isChecked')}
               >
                 正確答案
               </Radio>
@@ -156,16 +154,16 @@ export const SingleComponent = (props: SingleProps) => {
                   分數
                 </div>
                 <InputNumber
-                  value={option.score}
+                  value={option.optionScore}
                   precision={0}
                   min={0}
                   onChange={(value: any) =>
-                    editOptions(option.key, 'score', Number(value) || 0)
+                    editOptions(option.key, 'optionScore', Number(value) || 0)
                   }
                 />
               </>
             )}
-            {isEdit && (
+            {props.isEdit && (
               <BtnText
                 key='delete'
                 theme='danger'
@@ -178,30 +176,30 @@ export const SingleComponent = (props: SingleProps) => {
         </StyledEditingOption>
       )
     })
-  }
-
-  const renderStaticOptions = () => {
+  }, [props])
+  const renderOptionsResponse = useCallback(() => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
-          <div>{getOptionLabel(index)}</div>
-          <div>{option.label}</div>
           <Radio
-            checked={option.isChecked || false}
-            onChange={() =>
-              editOptions(option.key, 'isChecked', !option.isChecked)
-            }
-          />
+            checked={option.key === props.response}
+            onChange={() => editOptions(option.key, 'isChecked')}
+          >
+            {getOptionLabel(index)} {option.label}
+          </Radio>
         </StyledOption>
       )
     })
-  }
+  }, [props])
+
+  const renderOptions = {
+    [StatusEnum.editing]: renderOptionsEditing,
+    [StatusEnum.waiting_for_response]: renderOptionsResponse
+  } as const
   return (
     <>
       <Label>選項</Label>
-      {context.status === StatusEnum.editing
-        ? renderEditingOptions(props.isEdit)
-        : renderStaticOptions()}
+      {renderOptions[context.status as keyof typeof renderOptions]?.()}
       {context.status === StatusEnum.editing && props.isEdit && (
         <BtnOutline size='small' onClick={() => addOption()}>
           新增選項

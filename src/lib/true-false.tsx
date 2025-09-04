@@ -41,7 +41,6 @@ const getInitOptions: (id: string) => TrueFalseProps['options'] = (
       key,
       label: '',
       value: key,
-      isCorrect: false,
       isChecked: false
     })
   }
@@ -63,32 +62,38 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
   const { formItems } = components
   const { Input, Label, Radio } = formItems
 
-  const editOptions = (
-    key: string,
-    optionKey: 'label' | 'isCorrect' | 'isChecked',
-    value: string | boolean | number
-  ) => {
-    const { options } = props
-    const newOptions = options.map((option) => {
-      if (option.key === key) {
-        if (optionKey === 'isCorrect') {
-          option.isCorrect = value as boolean
-        } else if (optionKey === 'label') {
-          option.label = value as string
-        } else if (optionKey === 'isChecked') {
-          option.isChecked = value as boolean
+  const editOptions = useCallback(
+    (
+      optionKey: string,
+      key: 'label' | 'isChecked',
+      value?: string | boolean | number
+    ) => {
+      if (key === 'isChecked') {
+        let { answer, response } = props
+        if (context.status === StatusEnum.editing) {
+          answer = optionKey
         }
-      } else {
-        if (optionKey === 'isCorrect') {
-          option.isCorrect = false
-        } else if (optionKey === 'isChecked') {
-          option.isChecked = false
+        if (context.status === StatusEnum.waiting_for_response) {
+          response = optionKey
         }
+        props.updateSection({ ...props, answer, response })
       }
-      return option
-    })
-    props.updateSection({ ...props, options: newOptions })
-  }
+
+      if (key === 'label') {
+        const { options } = props
+        const newOptions = options.map((option) => {
+          if (key === 'label') {
+            if (option.key === optionKey) {
+              option.label = value as string
+            }
+          }
+          return option
+        })
+        props.updateSection({ ...props, options: newOptions })
+      }
+    },
+    [props, context]
+  )
   const renderOptionsEditing = useCallback(() => {
     return props.options.map((option, index) => {
       return (
@@ -105,10 +110,8 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
             <div style={{ width: '200px' }}>
               <Radio
                 disabled={!props.isEdit}
-                checked={option.isCorrect}
-                onChange={() =>
-                  editOptions(option.key, 'isCorrect', !option.isCorrect)
-                }
+                checked={option.key === props.answer}
+                onChange={() => editOptions(option.key, 'isChecked')}
               >
                 正確答案
               </Radio>
@@ -127,10 +130,8 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
           {props.mode === ModeEnum.test && (
             <div style={{ width: '200px' }}>
               <Radio
-                checked={option.isChecked}
-                onChange={() =>
-                  editOptions(option.key, 'isChecked', !option.isChecked)
-                }
+                checked={option.key === props.response}
+                onChange={() => editOptions(option.key, 'isChecked')}
               />
             </div>
           )}
@@ -143,7 +144,6 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
     [StatusEnum.editing]: renderOptionsEditing,
     [StatusEnum.waiting_for_response]: renderOptionsResponse
   } as const
-
   return (
     <>
       <Label>選項</Label>

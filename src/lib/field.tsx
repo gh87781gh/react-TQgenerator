@@ -1,5 +1,6 @@
-import { useContext } from 'react'
+import { useCallback, useContext } from 'react'
 import styled from 'styled-components'
+import { MyContext } from '../TQgenerator'
 import {
   FieldProps,
   FieldAnswerKeys,
@@ -7,7 +8,6 @@ import {
   ModeEnum,
   StatusEnum
 } from '../types'
-import { MyContext } from '../TQgenerator'
 
 const StyledAnswerType = styled.div`
   display: flex;
@@ -36,10 +36,20 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
   const { components } = context
   const { formItems } = components
   const { Label, Radio, Textarea, Input, InputNumber, DatePicker } = formItems
-  const update = (key: string, value: string | number) => {
-    props.updateSection({ ...props, [key]: value })
-  }
-  const renderEditingMode = () => (
+
+  const editSection = useCallback(
+    (key: string, value: string | number) => {
+      let { response } = props
+      if (key === 'answerType') {
+        if (value === 'date') response = null
+        if (value === 'input') response = ''
+        if (value === 'number') response = 0
+      }
+      props.updateSection({ ...props, response, [key]: value })
+    },
+    [props]
+  )
+  const renderModeEditing = () => (
     <>
       <Label>選項</Label>
       <StyledAnswerType>
@@ -49,7 +59,7 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
               disabled={!props.isEdit}
               key={key}
               checked={props.answerType === key}
-              onChange={() => update('answerType', key as FieldAnswerKeys)}
+              onChange={() => editSection('answerType', key as FieldAnswerKeys)}
             >
               {AnswerTypeMap[key as FieldAnswerKeys]}
             </Radio>
@@ -62,44 +72,41 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
           <Textarea
             disabled={!props.isEdit}
             value={props.answer}
-            onChange={(e: any) => update('answer', e.target.value)}
+            onChange={(e: any) => editSection('answer', e.target.value)}
           />
         </>
       )}
     </>
   )
-
-  const renderStaticMode = () => (
+  const renderModeResponse = () => (
     <>
       <Label>答案</Label>
       <div style={{ width: '300px' }}>
         {props.answerType === 'input' && (
           <Input
             value={props.response}
-            onChange={(e: any) => update('response', e.target.value)}
+            onChange={(e: any) => editSection('response', e.target.value)}
           />
         )}
         {props.answerType === 'number' && (
           <InputNumber
             value={props.response}
-            onChange={(e: any) => update('response', e.target.value)}
+            onChange={(val: any) => editSection('response', val || 0)}
           />
         )}
         {props.answerType === 'date' && (
           <DatePicker
             value={props.response}
-            onChange={(e: any) => update('response', e.target.value)}
+            onChange={(val: any) => editSection('response', val)}
           />
         )}
       </div>
     </>
   )
 
-  return (
-    <>
-      {context.status === StatusEnum.editing
-        ? renderEditingMode()
-        : renderStaticMode()}
-    </>
-  )
+  const renderOptions = {
+    [StatusEnum.editing]: renderModeEditing,
+    [StatusEnum.waiting_for_response]: renderModeResponse
+  } as const
+  return <>{renderOptions[context.status as keyof typeof renderOptions]?.()}</>
 }
