@@ -47,8 +47,6 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
     dayjs(props.response).isValid() ? dayjs(props.response) : null
   )
   useEffect(() => {
-    console.log('🟢 responseDate', responseDate)
-    if (!responseDate) return
     props.updateSection({
       ...props,
       response: responseDate?.toISOString() || null

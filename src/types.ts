@@ -114,9 +114,9 @@ export interface RatingProps extends BaseSectionProps {
   type: TypeKeysEnum.評分題
   ratingType: 'number' | 'click'
   rating: number
-  min?: number
-  max?: number
-  ratingGap?: number
+  min: number
+  max: number
+  ratingGap: number
 }
 
 export type SectionTypeMap = {

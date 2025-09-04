@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useCallback, useContext } from 'react'
 import styled from 'styled-components'
 import { RatingProps, TypeKeysEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
@@ -41,6 +41,7 @@ export const RatingComponent = (props: RatingProps) => {
   const { components } = context
   const { formItems } = components
   const { Label, Radio, InputNumber } = formItems
+
   const editRatingType = (value: RatingProps['ratingType']) => {
     props.updateSection({
       ...props,
@@ -51,128 +52,134 @@ export const RatingComponent = (props: RatingProps) => {
       ratingGap: initRating.ratingGap
     })
   }
-  const editRating = (
+  const editSection = (
     key: 'rating' | 'ratingGap' | 'min' | 'max',
     value: number
   ) => {
-    props.updateSection({ ...props, [key]: value })
+    let { finalScore } = props
+    if (key === 'rating') finalScore = value
+    props.updateSection({ ...props, finalScore, [key]: value })
   }
 
-  const renderClickButton = (props: RatingProps, isInteractive = false) => {
-    if (
-      props.max === undefined ||
-      props.min === undefined ||
-      props.ratingGap === undefined
-    )
-      return null
-
-    const step = (props.max - props.min) / props.ratingGap
-    return Array.from({ length: step + 1 }, (_, index) => {
-      const rating = props.min! + index * props.ratingGap!
-      if (rating > props.max!) return null
-      return (
-        <Radio
-          key={index}
-          disabled={!isInteractive}
-          checked={isInteractive && props.rating === rating}
-          onChange={
-            isInteractive ? () => editRating('rating', rating) : undefined
-          }
-        >
-          {rating}
-        </Radio>
+  const renderClickButton = useCallback(
+    (isInteractive: boolean = false) => {
+      if (
+        props.max === undefined ||
+        props.min === undefined ||
+        props.ratingGap === undefined
       )
-    })
-  }
+        return null
 
-  const renderEditingMode = () => (
-    <>
-      <Label>選項</Label>
-      <StyledRatingType>
-        <Radio
-          key='number'
-          disabled={!props.isEdit}
-          checked={props.ratingType === 'number'}
-          onChange={() => editRatingType('number')}
-        >
-          自行輸入
-        </Radio>
-        <Radio
-          key='click'
-          disabled={!props.isEdit}
-          checked={props.ratingType === 'click'}
-          onChange={() => editRatingType('click')}
-        >
-          選項點選（系統自動產生選項）
-        </Radio>
-      </StyledRatingType>
-      <StyledRatingResultItems>
-        <span>最小值：</span>
-        <InputNumber
-          disabled={!props.isEdit}
-          precision={0}
-          min={0}
-          value={props.min}
-          onChange={(value: any) => editRating('min', Number(value) || 0)}
-        />
-        <span>最大值：</span>
-        <InputNumber
-          disabled={!props.isEdit}
-          precision={0}
-          min={0}
-          value={props.max}
-          onChange={(value: any) => editRating('max', Number(value) || 0)}
-        />
+      const step = (props.max - props.min) / props.ratingGap
+      return Array.from({ length: step + 1 }, (_, index) => {
+        const rating = props.min! + index * props.ratingGap!
+        if (rating > props.max!) return null
+        return (
+          <Radio
+            key={index}
+            disabled={!isInteractive}
+            checked={isInteractive && props.rating === rating}
+            onChange={
+              isInteractive ? () => editSection('rating', rating) : undefined
+            }
+          >
+            {rating}
+          </Radio>
+        )
+      })
+    },
+    [props]
+  )
+
+  const renderModeEditing = useCallback(() => {
+    return (
+      <>
+        <Label>選項</Label>
+        <StyledRatingType>
+          <Radio
+            key='number'
+            disabled={!props.isEdit}
+            checked={props.ratingType === 'number'}
+            onChange={() => editRatingType('number')}
+          >
+            自行輸入
+          </Radio>
+          <Radio
+            key='click'
+            disabled={!props.isEdit}
+            checked={props.ratingType === 'click'}
+            onChange={() => editRatingType('click')}
+          >
+            選項點選（系統自動產生選項）
+          </Radio>
+        </StyledRatingType>
+        <StyledRatingResultItems>
+          <span>最小值：</span>
+          <InputNumber
+            disabled={!props.isEdit}
+            precision={0}
+            min={0}
+            value={props.min}
+            onChange={(value: any) => editSection('min', Number(value) || 0)}
+          />
+          <span>最大值：</span>
+          <InputNumber
+            disabled={!props.isEdit}
+            precision={0}
+            min={0}
+            value={props.max}
+            onChange={(value: any) => editSection('max', Number(value) || 0)}
+          />
+          {props.ratingType === 'click' && (
+            <>
+              <span>分數間隔：</span>
+              <InputNumber
+                disabled={!props.isEdit}
+                precision={0}
+                min={0}
+                value={props.ratingGap}
+                onChange={(value: any) =>
+                  editSection('ratingGap', Number(value) || 0)
+                }
+              />
+            </>
+          )}
+        </StyledRatingResultItems>
         {props.ratingType === 'click' && (
-          <>
-            <span>分數間隔：</span>
-            <InputNumber
-              disabled={!props.isEdit}
-              precision={0}
-              min={0}
-              value={props.ratingGap}
-              onChange={(value: any) =>
-                editRating('ratingGap', Number(value) || 0)
-              }
-            />
-          </>
+          <div style={{ marginTop: 'var(--gap-normal)' }}>
+            <hr />
+            <span style={{ marginRight: 'var(--gap-normal)' }}>
+              呈現按鈕範例：
+            </span>
+            {renderClickButton(false)}
+          </div>
         )}
-      </StyledRatingResultItems>
-      {props.ratingType === 'click' && (
-        <div style={{ marginTop: 'var(--gap-normal)' }}>
-          <hr />
-          <span style={{ marginRight: 'var(--gap-normal)' }}>
-            呈現按鈕範例：
-          </span>
-          {renderClickButton(props, false)}
-        </div>
-      )}
-    </>
-  )
+      </>
+    )
+  }, [props])
+  const renderModeResponse = useCallback(() => {
+    return (
+      <>
+        <Label>評分</Label>
+        {props.ratingType === 'number' ? (
+          <InputNumber
+            value={props.rating}
+            min={props.min}
+            max={props.max}
+            precision={0}
+            onChange={(value: any) => editSection('rating', Number(value) || 0)}
+            style={{ width: '150px' }}
+          />
+        ) : (
+          <StyledRatingType>{renderClickButton(true)}</StyledRatingType>
+        )}
+      </>
+    )
+  }, [props])
 
-  const renderStaticMode = () => (
-    <>
-      <Label>評分</Label>
-      {props.ratingType === 'number' ? (
-        <InputNumber
-          value={props.rating}
-          min={props.min}
-          max={props.max}
-          precision={0}
-          onChange={(value: any) => editRating('rating', Number(value) || 0)}
-          style={{ width: '150px' }}
-        />
-      ) : (
-        <StyledRatingType>{renderClickButton(props, true)}</StyledRatingType>
-      )}
-    </>
-  )
-
-  return (
-    <>
-      {context.status === StatusEnum.editing
-        ? renderEditingMode()
-        : renderStaticMode()}
-    </>
-  )
+  const renderMode = {
+    [StatusEnum.editing]: renderModeEditing,
+    [StatusEnum.waiting_for_response]: renderModeResponse
+  } as const
+  return <>{renderMode[context.status as keyof typeof renderMode]?.()}</>
 }
