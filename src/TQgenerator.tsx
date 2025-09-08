@@ -34,7 +34,7 @@ import { initRating } from './lib/rating'
 import { SortableItem } from './SortableSection'
 import { SectionContent } from './SortableSection'
 import { autoCorrectQuestionnaire } from './autoCorrect'
-import { autoCorrectTest } from './autoCorrect'
+// import { autoCorrectTest } from './autoCorrect'
 
 const StyledTQgenerator = styled.div`
   width: 100%;
@@ -165,14 +165,14 @@ const TypeKeysForQuest = [
 
 const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   const {
+    config,
+    actions,
     mode,
     role,
     status,
-    setStatus,
     sections,
     setSections,
     totalScore,
-    setTotalScore,
     components,
     utility
   } = props
@@ -183,7 +183,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
 
   const { formItems, btnItems } = components
   const { Select } = formItems
-  const { BtnPrimary } = btnItems
+  const { BtnPrimary, BtnOutline } = btnItems
 
   // NOTE Section 資料處理
   const [type, setType] = useState<TypeKeysEnum>(
@@ -297,32 +297,102 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     )
   }, [role, type])
   const renderActionResponse = useCallback(() => {
-    const submit = () => {
-      if (mode === ModeEnum.test) {
-        const totalScore = autoCorrectTest(sections)
-        console.log('totalScore', totalScore)
-      } else if (mode === ModeEnum.questionnaire) {
-        const totalScore = autoCorrectQuestionnaire(sections)
-        setTotalScore?.(totalScore)
-        setStatus?.(StatusEnum.waiting_for_correct)
-      } else {
-        console.error('Invalid Mode')
-      }
-    }
+    const submitResponse = () => {
+      const totalScore = autoCorrectQuestionnaire(sections)
 
+      let newStatus = null
+      switch (config?.passRuleCode) {
+        case config?.PassRuleCodeEnum.完成即通過:
+        case config?.PassRuleCodeEnum.無條件通過:
+        case config?.PassRuleCodeEnum.需通過測驗分數: //TODO 這邊怪怪的
+          newStatus = StatusEnum.finished
+          break
+        case config?.PassRuleCodeEnum.需評核通過:
+          newStatus = StatusEnum.waiting_for_correct
+          break
+        default:
+          break
+      }
+      console.log('newStatus', newStatus)
+      actions?.onUpdateTQgenData?.({
+        status: newStatus as StatusEnum,
+        totalScore: totalScore || 0
+      })
+    }
     return (
       <div className='section-body-add'>
-        <BtnPrimary onClick={() => submit()}>提交測驗</BtnPrimary>
+        <BtnPrimary onClick={() => submitResponse()}>提交測驗</BtnPrimary>
       </div>
     )
   }, [role, mode, sections])
   const renderActionCorrect = useCallback(() => {
-    return <div style={{ textAlign: 'center' }}>總得分：{totalScore}</div>
-  }, [role, mode])
+    const submitCorrect = () => {
+      actions?.onUpdateTQgenData?.({
+        status: StatusEnum.finished,
+        totalScore: totalScore || 0
+      })
+    }
+    return (
+      <>
+        {status === StatusEnum.waiting_for_correct && (
+          <div>總得分：{totalScore}</div>
+        )}
+        {config?.passRuleCode === config?.PassRuleCodeEnum.需評核通過 ? (
+          <>
+            <BtnOutline onClick={() => submitCorrect()}>不通過</BtnOutline>
+            <BtnPrimary onClick={() => submitCorrect()}>通過</BtnPrimary>
+          </>
+        ) : (
+          <BtnPrimary
+            onClick={() => {
+              switch (config?.passRuleCode) {
+                case config?.PassRuleCodeEnum.完成即通過:
+                case config?.PassRuleCodeEnum.無條件通過:
+                  submitCorrect()
+                  break
+                case config?.PassRuleCodeEnum.需通過測驗分數:
+                  if (
+                    totalScore !== null &&
+                    totalScore !== undefined &&
+                    totalScore >= 1
+                  ) {
+                    submitCorrect()
+                  }
+                  break
+                default:
+                  break
+              }
+            }}
+          >
+            送出
+          </BtnPrimary>
+        )}
+      </>
+    )
+  }, [role, mode, config, totalScore])
+  const renderActionFinish = useCallback(() => {
+    if (config?.isAllowReviewScore) {
+      return (
+        <div
+          style={{
+            width: '100%',
+            height: '100px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          總得分：{totalScore}
+        </div>
+      )
+    }
+    return <></>
+  }, [totalScore, config])
   const renderAction = {
     [StatusEnum.editing]: renderActionEditing,
     [StatusEnum.waiting_for_response]: renderActionResponse,
-    [StatusEnum.waiting_for_correct]: renderActionCorrect
+    [StatusEnum.waiting_for_correct]: renderActionCorrect,
+    [StatusEnum.finished]: renderActionFinish
   }
 
   const getOptions = () => {
@@ -384,7 +454,17 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           </SortableContext>
         </DndContext>
 
-        {renderAction[status as keyof typeof renderAction]?.()}
+        <div
+          style={{
+            width: '100%',
+            height: '100px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          {renderAction[status as keyof typeof renderAction]?.()}
+        </div>
 
         <div className='version'>v{packageJson.version}</div>
       </StyledTQgenerator>

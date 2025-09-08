@@ -130,15 +130,25 @@ export type SectionTypeMap = {
 export type SectionProps<T extends TypeKeysEnum> = SectionTypeMap[T]
 
 export type TQgeneratorProps = {
+  config?: {
+    PassRuleCodeEnum?: any
+    passRuleCode?: number
+    isAllowReviewScore?: boolean | null
+    isAllowReviewWithAnswer?: boolean | null
+  }
+  actions?: {
+    onUpdateTQgenData: (data?: {
+      status?: StatusEnum
+      totalScore?: number
+    }) => void
+  }
   mode: ModeEnum | null
   role: RoleEnum | null
   setRole?: (role: RoleEnum) => void
   status: StatusEnum | null
-  setStatus?: (status: StatusEnum) => void
   sections: SectionProps<TypeKeysEnum>[]
   setSections?: (sections: SectionProps<TypeKeysEnum>[]) => void
   totalScore?: number
-  setTotalScore?: (totalScore: number) => void
 
   components: {
     formItems: {

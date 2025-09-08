@@ -1,5 +1,5 @@
 import { useCallback, useContext } from 'react'
-import { EssayProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
+import { EssayProps, TypeKeysEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 
 export const initEssay: Pick<EssayProps, 'type' | 'answer' | 'response'> = {
@@ -37,15 +37,11 @@ export const EssayComponent = (props: EssayProps) => {
   const renderModeResponse = useCallback(
     () => (
       <>
-        {props.mode === ModeEnum.test && (
-          <>
-            <Label>答案</Label>
-            <Input
-              value={props.response}
-              onChange={(e: any) => editSection('response', e.target.value)}
-            />
-          </>
-        )}
+        <Label>答案</Label>
+        <Input
+          value={props.response}
+          onChange={(e: any) => editSection('response', e.target.value)}
+        />
       </>
     ),
     [props]

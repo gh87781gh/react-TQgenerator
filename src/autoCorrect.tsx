@@ -28,17 +28,11 @@ const autoCorrectQuestionnaire = (sections: SectionProps<TypeKeysEnum>[]) => {
         }
         break
       case TypeKeysEnum.多選題:
-        if (
-          (section.answer as string[])?.every((answer) =>
-            (section.response as string[])?.includes(answer)
-          )
-        ) {
-          const optionScores = section.options
-            .map((option) => option.optionScore)
-            .filter((score) => score !== undefined)
-          section.finalScore = optionScores.reduce((acc, curr) => acc + curr, 0)
-          totalScore += section.finalScore
-        }
+        const optionScores = section.options
+          .map((option) => option.optionScore) //TODO 好像不是optionScore而是score，這是bug
+          .filter((score) => score !== undefined)
+        section.finalScore = optionScores.reduce((acc, curr) => acc + curr, 0)
+        totalScore += section.finalScore
         break
       case TypeKeysEnum.評分題:
         totalScore += section.finalScore
