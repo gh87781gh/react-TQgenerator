@@ -1,18 +1,16 @@
 import { SectionProps, TypeKeysEnum } from './types'
 
 const autoCorrectTest = (sections: SectionProps<TypeKeysEnum>[]) => {
-  console.log('autoCorrectTest', sections)
-
   let totalScore = 0
-  // sections.forEach((section) => {
-  //   // TODO: 實作測驗自動評分邏輯
-  //   totalScore += section.finalScore || 0
-  // })
+  sections.forEach((section) => {
+    return section
+    // // TODO: 實作測驗自動評分邏輯
+    // totalScore += section.finalScore || 0
+  })
 
   return totalScore
 }
 const autoCorrectQuestionnaire = (sections: SectionProps<TypeKeysEnum>[]) => {
-  console.log('onSubmitQuestionnaire', sections)
   // TODO 下次交付：檢查各section的response是否為空
 
   // NOTE 問卷的分數是在答案裡

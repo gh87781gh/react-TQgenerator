@@ -5,13 +5,6 @@ export enum ModeEnum {
   questionnaire = 'questionnaire'
 }
 
-export enum RoleEnum {
-  editor = 'editor',
-  responder = 'responder',
-  corrector = 'corrector',
-  viewer = 'viewer'
-}
-
 export enum StatusEnum {
   editing = 'editing',
   waiting_for_response = 'waiting_for_response',
@@ -21,7 +14,6 @@ export enum StatusEnum {
 }
 
 export type ModeType = keyof typeof ModeEnum
-export type RoleType = keyof typeof RoleEnum
 export type StatusType = keyof typeof StatusEnum
 
 export enum TypeKeysEnum {
@@ -131,24 +123,31 @@ export type SectionProps<T extends TypeKeysEnum> = SectionTypeMap[T]
 
 export type TQgeneratorProps = {
   config?: {
-    PassRuleCodeEnum?: any
-    passRuleCode?: number
+    isPreviewEditing?: boolean | null
     isAllowReviewScore?: boolean | null
     isAllowReviewWithAnswer?: boolean | null
+    isShowCorrectActionPass?: boolean | null
+    isShowCorrectActionSubmit?: boolean | null
   }
   actions?: {
-    onUpdateTQgenData: (data?: {
-      status?: StatusEnum
-      totalScore?: number
-    }) => void
+    onSubmitEditing?: () => void
+    onPreviewEditing?: () => void
+    onSubmitResponse?: (totalScore: number) => void
+    onSubmitCorrect?: (totalScore: number) => void
+    onSubmitFinish?: () => void
   }
+
   mode: ModeEnum | null
-  role: RoleEnum | null
-  setRole?: (role: RoleEnum) => void
   status: StatusEnum | null
   sections: SectionProps<TypeKeysEnum>[]
   setSections?: (sections: SectionProps<TypeKeysEnum>[]) => void
-  totalScore?: number
+  result?: {
+    score?: number | null
+    reviewResult?: any | null
+    specifyUserID?: string | null
+    targetUserID?: string | null
+    // TOCHECK
+  }
 
   components: {
     formItems: {

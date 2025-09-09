@@ -21,7 +21,6 @@ import {
   TypeKeysEnum,
   ModeEnum,
   StatusEnum,
-  RoleEnum,
   TQgeneratorProps
 } from './types'
 import { initTrueFalse } from './lib/true-false'
@@ -145,7 +144,7 @@ const StyledTQgenerator = styled.div`
   }
 `
 
-export type MyContextType = Omit<TQgeneratorProps, 'setRole' | 'setStatus'>
+export type MyContextType = Omit<TQgeneratorProps, 'setStatus'>
 export const MyContext = React.createContext<MyContextType>({} as MyContextType)
 
 const TypeKeysForTest = [
@@ -168,22 +167,21 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     config,
     actions,
     mode,
-    role,
     status,
     sections,
     setSections,
-    totalScore,
+    result,
     components,
     utility
   } = props
 
-  if (!mode || !role || !status) {
+  if (!mode || !status) {
     return null
   }
 
   const { formItems, btnItems } = components
   const { Select } = formItems
-  const { BtnPrimary, BtnOutline } = btnItems
+  const { BtnPrimary, BtnOutline, BtnGroup } = btnItems
 
   // NOTE Section 資料處理
   const [type, setType] = useState<TypeKeysEnum>(
@@ -280,96 +278,83 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     }
   }
 
+  const renderActionSubmitEditing = useCallback(() => {
+    return (
+      !config?.isPreviewEditing && (
+        <BtnGroup style={{ textAlign: 'right', marginBottom: '1rem' }}>
+          <BtnOutline onClick={() => actions?.onPreviewEditing?.()}>
+            預覽
+          </BtnOutline>
+          <BtnPrimary onClick={() => actions?.onSubmitEditing?.()}>
+            儲存
+          </BtnPrimary>
+        </BtnGroup>
+      )
+    )
+  }, [actions, status])
   const renderActionEditing = useCallback(() => {
-    if (role !== RoleEnum.editor) return
     return (
-      <div className='section-body-add'>
-        <Select
-          allowClear={false}
-          options={getOptions()}
-          value={type}
-          onChange={(value: any) => {
-            setType(value as TypeKeysEnum)
-          }}
-        />
-        <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
-      </div>
+      status === StatusEnum.editing && (
+        <div className='section-body-add'>
+          <Select
+            allowClear={false}
+            options={getOptions()}
+            value={type}
+            onChange={(value: any) => {
+              setType(value as TypeKeysEnum)
+            }}
+          />
+          <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
+        </div>
+      )
     )
-  }, [role, type])
+  }, [type, status])
   const renderActionResponse = useCallback(() => {
-    const submitResponse = () => {
-      const totalScore = autoCorrectQuestionnaire(sections)
-
-      let newStatus = null
-      switch (config?.passRuleCode) {
-        case config?.PassRuleCodeEnum.完成即通過:
-        case config?.PassRuleCodeEnum.無條件通過:
-        case config?.PassRuleCodeEnum.需通過測驗分數: //TODO 這邊怪怪的
-          newStatus = StatusEnum.finished
-          break
-        case config?.PassRuleCodeEnum.需評核通過:
-          newStatus = StatusEnum.waiting_for_correct
-          break
-        default:
-          break
-      }
-      console.log('newStatus', newStatus)
-      actions?.onUpdateTQgenData?.({
-        status: newStatus as StatusEnum,
-        totalScore: totalScore || 0
-      })
-    }
     return (
       <div className='section-body-add'>
-        <BtnPrimary onClick={() => submitResponse()}>提交測驗</BtnPrimary>
+        <BtnPrimary
+          onClick={() => {
+            const score = autoCorrectQuestionnaire(sections)
+            actions?.onSubmitResponse?.(score)
+          }}
+        >
+          提交測驗
+        </BtnPrimary>
       </div>
     )
-  }, [role, mode, sections])
+  }, [sections, actions])
   const renderActionCorrect = useCallback(() => {
-    const submitCorrect = () => {
-      actions?.onUpdateTQgenData?.({
-        status: StatusEnum.finished,
-        totalScore: totalScore || 0
-      })
-    }
+    const finalTotalScore = result?.score || 0
     return (
       <>
         {status === StatusEnum.waiting_for_correct && (
-          <div>總得分：{totalScore}</div>
+          <div>總得分：{result?.score}</div>
         )}
-        {config?.passRuleCode === config?.PassRuleCodeEnum.需評核通過 ? (
+        {config?.isShowCorrectActionPass ? (
           <>
-            <BtnOutline onClick={() => submitCorrect()}>不通過</BtnOutline>
-            <BtnPrimary onClick={() => submitCorrect()}>通過</BtnPrimary>
+            <BtnOutline
+              onClick={() => actions?.onSubmitCorrect?.(finalTotalScore)}
+            >
+              不通過
+            </BtnOutline>
+            <BtnPrimary
+              onClick={() => actions?.onSubmitCorrect?.(finalTotalScore)}
+            >
+              通過
+            </BtnPrimary>
           </>
-        ) : (
+        ) : config?.isShowCorrectActionSubmit ? (
           <BtnPrimary
             onClick={() => {
-              switch (config?.passRuleCode) {
-                case config?.PassRuleCodeEnum.完成即通過:
-                case config?.PassRuleCodeEnum.無條件通過:
-                  submitCorrect()
-                  break
-                case config?.PassRuleCodeEnum.需通過測驗分數:
-                  if (
-                    totalScore !== null &&
-                    totalScore !== undefined &&
-                    totalScore >= 1
-                  ) {
-                    submitCorrect()
-                  }
-                  break
-                default:
-                  break
-              }
+              actions?.onSubmitCorrect?.(finalTotalScore)
             }}
           >
             送出
           </BtnPrimary>
-        )}
+        ) : null}
       </>
     )
-  }, [role, mode, config, totalScore])
+  }, [mode, config, result?.score, actions])
   const renderActionFinish = useCallback(() => {
     if (config?.isAllowReviewScore) {
       return (
@@ -382,12 +367,12 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             alignItems: 'center'
           }}
         >
-          總得分：{totalScore}
+          總得分：{result?.score}
         </div>
       )
     }
     return <></>
-  }, [totalScore, config])
+  }, [result?.score, config, actions])
   const renderAction = {
     [StatusEnum.editing]: renderActionEditing,
     [StatusEnum.waiting_for_response]: renderActionResponse,
@@ -418,7 +403,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     <MyContext.Provider
       value={{
         mode,
-        role,
         status,
         sections,
         setSections,
@@ -427,6 +411,8 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       }}
     >
       <StyledTQgenerator>
+        {renderActionSubmitEditing?.()}
+
         <DndContext
           sensors={[mouseSensor, pointerSensor]}
           onDragEnd={handleDragEnd}
