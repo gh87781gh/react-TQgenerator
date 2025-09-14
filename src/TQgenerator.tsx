@@ -168,6 +168,8 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     actions,
     mode,
     status,
+    actorID,
+    reviewerID,
     sections,
     setSections,
     result,
@@ -176,6 +178,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   } = props
 
   if (!mode || !status) {
+    console.error('mode or status is not set')
     return null
   }
 
@@ -280,7 +283,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
 
   const renderActionSubmitEditing = useCallback(() => {
     return (
-      !config?.isPreviewEditing && (
+      status === StatusEnum.editing && (
         <BtnGroup style={{ textAlign: 'right', marginBottom: '1rem' }}>
           <BtnOutline onClick={() => actions?.onPreviewEditing?.()}>
             預覽
@@ -333,12 +336,22 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         {config?.isShowCorrectActionPass ? (
           <>
             <BtnOutline
-              onClick={() => actions?.onSubmitCorrect?.(finalTotalScore)}
+              onClick={() =>
+                actions?.onSubmitCorrect?.(
+                  finalTotalScore,
+                  config?.ReviewResultMap?.不通過 ?? null
+                )
+              }
             >
               不通過
             </BtnOutline>
             <BtnPrimary
-              onClick={() => actions?.onSubmitCorrect?.(finalTotalScore)}
+              onClick={() =>
+                actions?.onSubmitCorrect?.(
+                  finalTotalScore,
+                  config?.ReviewResultMap?.通過 ?? null
+                )
+              }
             >
               通過
             </BtnPrimary>
@@ -346,7 +359,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         ) : config?.isShowCorrectActionSubmit ? (
           <BtnPrimary
             onClick={() => {
-              actions?.onSubmitCorrect?.(finalTotalScore)
+              actions?.onSubmitCorrect?.(finalTotalScore, null)
             }}
           >
             送出
@@ -406,8 +419,11 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         status,
         sections,
         setSections,
+        actorID,
+        reviewerID,
         components,
-        utility
+        utility,
+        result
       }}
     >
       <StyledTQgenerator>

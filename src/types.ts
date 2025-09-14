@@ -7,10 +7,11 @@ export enum ModeEnum {
 
 export enum StatusEnum {
   editing = 'editing',
+  preview_editing = 'preview_editing',
   waiting_for_response = 'waiting_for_response',
   waiting_for_correct = 'waiting_for_correct',
   finished = 'finished',
-  archived = 'archived'
+  archived = 'archived' // TODO 目前用不到，後續可以刪除
 }
 
 export type ModeType = keyof typeof ModeEnum
@@ -128,25 +129,30 @@ export type TQgeneratorProps = {
     isAllowReviewWithAnswer?: boolean | null
     isShowCorrectActionPass?: boolean | null
     isShowCorrectActionSubmit?: boolean | null
+    ReviewResultMap?: {
+      [key: string]: number | null
+    }
   }
   actions?: {
     onSubmitEditing?: () => void
     onPreviewEditing?: () => void
     onSubmitResponse?: (totalScore: number) => void
-    onSubmitCorrect?: (totalScore: number) => void
+    onSubmitCorrect?: (totalScore: number, reviewResult: number | null) => void
     onSubmitFinish?: () => void
+    setEvaluatorTarget?: (targetID: string) => void
   }
 
   mode: ModeEnum | null
   status: StatusEnum | null
   sections: SectionProps<TypeKeysEnum>[]
   setSections?: (sections: SectionProps<TypeKeysEnum>[]) => void
-  result?: {
-    score?: number | null
-    reviewResult?: any | null
-    specifyUserID?: string | null
+  actorID: string | null //填寫者
+  reviewerID: string | null //評核者
+  result: {
+    score: number | null
+    reviewResult?: number | null
     targetUserID?: string | null
-    // TOCHECK
+    // specifyUserID?: string | null
   }
 
   components: {

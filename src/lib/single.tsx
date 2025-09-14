@@ -194,6 +194,7 @@ export const SingleComponent = (props: SingleProps) => {
 
   const renderOptions = {
     [StatusEnum.editing]: renderOptionsEditing,
+    [StatusEnum.preview_editing]: renderOptionsResponse,
     [StatusEnum.waiting_for_response]: renderOptionsResponse
   } as const
   return (
