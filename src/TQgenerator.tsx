@@ -1,19 +1,20 @@
 import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import './variables.css'
+import _ from 'lodash'
 import packageJson from '../package.json'
-import {
-  DndContext,
-  MouseSensor,
-  useSensor,
-  PointerSensor
-} from '@dnd-kit/core'
-import type { DragEndEvent } from '@dnd-kit/core'
-import {
-  arrayMove,
-  verticalListSortingStrategy,
-  SortableContext
-} from '@dnd-kit/sortable'
+// import {
+//   DndContext,
+//   MouseSensor,
+//   useSensor,
+//   PointerSensor
+// } from '@dnd-kit/core'
+// import type { DragEndEvent } from '@dnd-kit/core'
+// import {
+//   arrayMove,
+//   verticalListSortingStrategy,
+//   SortableContext
+// } from '@dnd-kit/sortable'
 
 import {
   initBaseSection,
@@ -30,7 +31,7 @@ import { initField } from './lib/field'
 import { initEssay } from './lib/essay'
 import { initRating } from './lib/rating'
 
-import { SortableItem } from './SortableSection'
+// import { SortableItem } from './SortableSection'
 import { SectionContent } from './SortableSection'
 import { autoCorrectQuestionnaire } from './autoCorrect'
 // import { autoCorrectTest } from './autoCorrect'
@@ -61,7 +62,7 @@ const StyledTQgenerator = styled.div`
       box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
     }
 
-    &.editing {
+    &.responding {
       border-color: var(--color-primary);
       box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
     }
@@ -165,12 +166,13 @@ const TypeKeysForQuest = [
 const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   const {
     config,
+    assets,
     actions,
     mode,
     status,
+    role,
     actorID,
     reviewerID,
-    sections,
     setSections,
     result,
     components,
@@ -182,11 +184,10 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     return null
   }
 
-  const { formItems, btnItems } = components
+  const { formItems, btnItems, modal: Modal } = components
   const { Select } = formItems
   const { BtnPrimary, BtnOutline, BtnGroup } = btnItems
 
-  // NOTE Section 資料處理
   const [type, setType] = useState<TypeKeysEnum>(
     mode === ModeEnum.test
       ? TypeKeysForTest[0]
@@ -195,26 +196,31 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       : TypeKeysEnum.是非題 // TODO 應該要是null
   )
   const addSection = (type: TypeKeysEnum) => {
-    const currentSections = sections.map((section) => {
-      section.isEdit = false
-      return section
-    })
+    const id = String(props.sections.length + 1)
 
-    const id = String(sections.length + 1)
-
-    let newItem = { ...initBaseSection }
+    let newItem = _.cloneDeep(initBaseSection)
     newItem.mode = mode as ModeEnum
     newItem.id = id as string
 
     switch (type) {
       case TypeKeysEnum.是非題:
-        newItem = { ...newItem, answer: '', response: '', ...initTrueFalse(id) }
+        newItem = {
+          ...newItem,
+          answer: '',
+          response: '',
+          ...initTrueFalse(id)
+        }
         break
       case TypeKeysEnum.單選題:
         newItem = { ...newItem, answer: '', response: '', ...initSingle(id) }
         break
       case TypeKeysEnum.多選題:
-        newItem = { ...newItem, answer: [], response: [], ...initMultiple(id) }
+        newItem = {
+          ...newItem,
+          answer: [],
+          response: [],
+          ...initMultiple(id)
+        }
         break
       case TypeKeysEnum.填充題:
         newItem = { ...newItem, ...initField }
@@ -229,7 +235,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         console.error('Invalid Section Type')
     }
     const newSections = [
-      ...currentSections,
+      ...props.sections,
       { ...newItem }
     ] as SectionProps<TypeKeysEnum>[]
     setSections?.(newSections)
@@ -240,11 +246,9 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   ) => {
     if (!id) return
 
-    const newSections = sections.map((section) => {
+    const newSections = props.sections.map((section) => {
       if (section.id === id) {
         return { ...section, ...data }
-      } else if (data.isEdit === true) {
-        return { ...section, isEdit: false }
       } else {
         return section
       }
@@ -254,32 +258,36 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   const deleteSection = (id: string | null) => {
     if (!id) return
 
-    const newSections = sections.filter((section) => section.id !== id)
+    const newSections = props.sections.filter((section) => section.id !== id)
     setSections?.(newSections)
   }
 
   // NOTE DND
-  const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: {
-      distance: 10
-    }
-  })
-  const pointerSensor = useSensor(PointerSensor, {
-    activationConstraint: {
-      distance: 10
-    }
-  })
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
+  // const mouseSensor = useSensor(MouseSensor, {
+  //   activationConstraint: {
+  //     distance: 10
+  //   }
+  // })
+  // const pointerSensor = useSensor(PointerSensor, {
+  //   activationConstraint: {
+  //     distance: 10
+  //   }
+  // })
+  // const handleDragEnd = (event: DragEndEvent) => {
+  //   const { active, over } = event
 
-    if (over && active.id !== over.id) {
-      const oldIndex = sections.findIndex((section) => section.id === active.id)
-      const newIndex = sections.findIndex((section) => section.id === over.id)
+  //   if (over && active.id !== over.id) {
+  //     const oldIndex = props.sections.findIndex(
+  //       (section) => section.id === active.id
+  //     )
+  //     const newIndex = props.sections.findIndex(
+  //       (section) => section.id === over.id
+  //     )
 
-      const newSections = arrayMove(sections, oldIndex, newIndex)
-      setSections?.(newSections)
-    }
-  }
+  //     const newSections = arrayMove(props.sections, oldIndex, newIndex)
+  //     setSections?.(newSections)
+  //   }
+  // }
 
   const renderActionSubmitEditing = useCallback(() => {
     return (
@@ -297,94 +305,117 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }, [actions, status])
   const renderActionEditing = useCallback(() => {
     return (
-      status === StatusEnum.editing && (
-        <div className='section-body-add'>
-          <Select
-            allowClear={false}
-            options={getOptions()}
-            value={type}
-            onChange={(value: any) => {
-              setType(value as TypeKeysEnum)
-            }}
-          />
-          <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
-        </div>
-      )
+      <div className='section-body-add'>
+        <Select
+          allowClear={false}
+          options={getOptions()}
+          value={type}
+          onChange={(value: any) => {
+            setType(value as TypeKeysEnum)
+          }}
+        />
+        <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
+      </div>
     )
-  }, [type, status])
+  }, [type, status, addSection])
+  const [isShowSelectReviewer, setIsShowSelectReviewer] = useState(false)
+  const [selectedReviewerID, setSelectedReviewerID] = useState<string | null>(
+    null
+  )
   const renderActionResponse = useCallback(() => {
     return (
       <div className='section-body-add'>
         <BtnPrimary
           onClick={() => {
-            const score = autoCorrectQuestionnaire(sections)
-            actions?.onSubmitResponse?.(score)
+            if (config?.isAllowSelectReviewer) {
+              setIsShowSelectReviewer(true)
+            } else {
+              const score = autoCorrectQuestionnaire(props.sections)
+              actions?.onSubmitResponse?.(score, null)
+            }
           }}
         >
-          提交測驗
+          {config?.isAllowSelectReviewer ? '選擇評核者' : '提交測驗'}
         </BtnPrimary>
       </div>
     )
-  }, [sections, actions])
+  }, [props.sections, actions])
   const renderActionCorrect = useCallback(() => {
     const finalTotalScore = result?.score || 0
     return (
       <>
-        {status === StatusEnum.waiting_for_correct && (
-          <div>總得分：{result?.score}</div>
-        )}
+        {status === StatusEnum.waiting_for_correct ||
+        status === StatusEnum.finished ? (
+          <div style={{ marginRight: '0.5rem' }}>總得分：{result?.score}</div>
+        ) : null}
         {config?.isShowCorrectActionPass ? (
-          <>
+          <BtnGroup>
             <BtnOutline
               onClick={() =>
                 actions?.onSubmitCorrect?.(
                   finalTotalScore,
-                  config?.ReviewResultMap?.不通過 ?? null
+                  assets?.ReviewResultMap?.不通過 ?? null
                 )
               }
             >
-              不通過
+              {status === StatusEnum.waiting_for_correct
+                ? '不通過'
+                : status === StatusEnum.finished
+                ? '更新為不通過'
+                : '-'}
             </BtnOutline>
             <BtnPrimary
               onClick={() =>
                 actions?.onSubmitCorrect?.(
                   finalTotalScore,
-                  config?.ReviewResultMap?.通過 ?? null
+                  assets?.ReviewResultMap?.通過 ?? null
                 )
               }
             >
-              通過
+              {status === StatusEnum.waiting_for_correct
+                ? '通過'
+                : status === StatusEnum.finished
+                ? '更新為通過'
+                : '-'}
             </BtnPrimary>
-          </>
+          </BtnGroup>
         ) : config?.isShowCorrectActionSubmit ? (
           <BtnPrimary
             onClick={() => {
               actions?.onSubmitCorrect?.(finalTotalScore, null)
             }}
           >
-            送出
+            {status === StatusEnum.waiting_for_correct
+              ? '送出評核'
+              : status === StatusEnum.finished
+              ? '更新評核'
+              : '-'}
           </BtnPrimary>
         ) : null}
       </>
     )
   }, [mode, config, result?.score, actions])
   const renderActionFinish = useCallback(() => {
-    if (config?.isAllowReviewScore) {
-      return (
-        <div
-          style={{
-            width: '100%',
-            height: '100px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          總得分：{result?.score}
-        </div>
-      )
+    if (config?.isAllowReCorrect) {
+      return renderActionCorrect()
     }
-    return <></>
+    // TODO 填寫者重新測驗
+    // if (config?.isAllowReviewScore) {
+    //   return (
+    //     <div
+    //       style={{
+    //         width: '100%',
+    //         height: '100px',
+    //         display: 'flex',
+    //         justifyContent: 'center',
+    //         alignItems: 'center'
+    //       }}
+    //     >
+    //       總得分：{result?.score}
+    //     </div>
+    //   )
+    // }
+    return null
   }, [result?.score, config, actions])
   const renderAction = {
     [StatusEnum.editing]: renderActionEditing,
@@ -412,12 +443,27 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         })
       : []
   }
+
+  if (
+    status === StatusEnum.waiting_for_correct &&
+    !config?.isShowCorrectContent
+  ) {
+    // TODO 加上沒有權限查看的提示
+    return null
+  }
+
+  if (status === StatusEnum.finished && !config?.isAllowReview) {
+    // TODO 加上沒有權限查看的提示
+    return null
+  }
+
   return (
     <MyContext.Provider
       value={{
         mode,
         status,
-        sections,
+        role,
+        sections: props.sections,
         setSections,
         actorID,
         reviewerID,
@@ -429,17 +475,31 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       <StyledTQgenerator>
         {renderActionSubmitEditing?.()}
 
-        <DndContext
+        {props.sections
+          .filter((section) => section.id !== null)
+          .map((section, index) => {
+            return (
+              <SectionContent
+                key={section.id}
+                section={section}
+                index={index}
+                editSection={editSection}
+                deleteSection={deleteSection}
+              />
+            )
+          })}
+
+        {/* <DndContext
           sensors={[mouseSensor, pointerSensor]}
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={sections
+            items={props.sections
               .map((section) => section.id)
               .filter((id): id is string => id !== null)}
             strategy={verticalListSortingStrategy}
           >
-            {sections
+            {props.sections
               .filter((section) => section.id !== null)
               .map((section, index) => {
                 return (
@@ -454,7 +514,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                 )
               })}
           </SortableContext>
-        </DndContext>
+        </DndContext> */}
 
         <div
           style={{
@@ -470,6 +530,36 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
 
         <div className='version'>v{packageJson.version}</div>
       </StyledTQgenerator>
+
+      <Modal
+        title='訊息'
+        open={isShowSelectReviewer}
+        onCancel={() => setIsShowSelectReviewer(false)}
+        footer={[
+          <BtnOutline key='取消' onClick={() => setIsShowSelectReviewer(false)}>
+            取消
+          </BtnOutline>,
+          <BtnPrimary
+            key='確認'
+            disabled={!selectedReviewerID}
+            onClick={() => {
+              setIsShowSelectReviewer(false)
+              const score = autoCorrectQuestionnaire(props.sections)
+              actions?.onSubmitResponse?.(score, selectedReviewerID)
+            }}
+          >
+            確認提交
+          </BtnPrimary>
+        ]}
+      >
+        <Select
+          options={assets?.reviewerOptions}
+          value={selectedReviewerID}
+          onChange={(value: any) => {
+            setSelectedReviewerID(value)
+          }}
+        />
+      </Modal>
     </MyContext.Provider>
   )
 }

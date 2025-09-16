@@ -3,6 +3,7 @@ import {
   ModeType,
   StatusType,
   ModeEnum,
+  RoleEnum,
   StatusEnum,
   TQgeneratorProps,
   TypeKeysEnum,
@@ -17,7 +18,7 @@ import {
 } from './types'
 
 export { TQgenerator }
-export { TypeKeys, TypeKeysEnum, ModeEnum, StatusEnum }
+export { TypeKeys, TypeKeysEnum, ModeEnum, StatusEnum, RoleEnum }
 export type {
   ModeType,
   StatusType,

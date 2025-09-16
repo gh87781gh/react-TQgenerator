@@ -11,7 +11,10 @@ export enum StatusEnum {
   waiting_for_response = 'waiting_for_response',
   waiting_for_correct = 'waiting_for_correct',
   finished = 'finished',
-  archived = 'archived' // TODO 目前用不到，後續可以刪除
+}
+export enum RoleEnum {
+  actor = 'actor',
+  reviewer = 'reviewer'
 }
 
 export type ModeType = keyof typeof ModeEnum
@@ -33,7 +36,7 @@ export const TypeKeys = Object.values(TypeKeysEnum)
 interface BaseSectionProps {
   id: string | null
   mode: ModeEnum | null
-  isEdit: boolean // 在status=editing時，isEdit為各section可編輯與否的狀態
+  role: RoleEnum | null
   updateSection: (section: SectionProps<TypeKeysEnum>) => void
   question: string // 問題
   answer: string | number | null | string[] | dayjs.Dayjs  // 解析
@@ -44,7 +47,7 @@ interface BaseSectionProps {
 export const initBaseSection: BaseSectionProps = {
   id: null,
   mode: null,
-  isEdit: true,
+  role: RoleEnum.actor,
   updateSection: () => { },
   question: '',
   answer: null,
@@ -124,26 +127,37 @@ export type SectionProps<T extends TypeKeysEnum> = SectionTypeMap[T]
 
 export type TQgeneratorProps = {
   config?: {
+    isAllowSelectReviewer?: boolean | null
+    isAllowReCorrect?: boolean | null
     isPreviewEditing?: boolean | null
+    isAllowReview?: boolean | null
     isAllowReviewScore?: boolean | null
     isAllowReviewWithAnswer?: boolean | null
+    isShowCorrectContent?: boolean | null
     isShowCorrectActionPass?: boolean | null
     isShowCorrectActionSubmit?: boolean | null
+  }
+  assets?: {
     ReviewResultMap?: {
       [key: string]: number | null
-    }
+    },
+    reviewerOptions?: {
+      key: string
+      label: string
+      value: string
+    }[]
   }
   actions?: {
     onSubmitEditing?: () => void
     onPreviewEditing?: () => void
-    onSubmitResponse?: (totalScore: number) => void
+    onSubmitResponse?: (totalScore: number, reviewerID: string | null) => void
     onSubmitCorrect?: (totalScore: number, reviewResult: number | null) => void
     onSubmitFinish?: () => void
-    setEvaluatorTarget?: (targetID: string) => void
   }
 
   mode: ModeEnum | null
   status: StatusEnum | null
+  role: RoleEnum | null
   sections: SectionProps<TypeKeysEnum>[]
   setSections?: (sections: SectionProps<TypeKeysEnum>[]) => void
   actorID: string | null //填寫者
@@ -175,7 +189,8 @@ export type TQgeneratorProps = {
     editor: {
       component: React.ComponentType<any>,
       onUploadImage: (image: string) => void
-    }
+    },
+    modal: React.ComponentType<any>,
   },
   utility: {
     icons: {

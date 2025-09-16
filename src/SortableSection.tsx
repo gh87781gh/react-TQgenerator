@@ -1,7 +1,13 @@
-import React, { useContext, useRef, useEffect } from 'react'
+import React, { useContext } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { SectionProps, TypeKeysEnum, ModeEnum, StatusEnum } from './types'
+import {
+  SectionProps,
+  TypeKeysEnum,
+  ModeEnum,
+  StatusEnum,
+  RoleEnum
+} from './types'
 import { MyContext } from './TQgenerator'
 import { TrueFalseComponent } from './lib/true-false'
 import { SingleComponent } from './lib/single'
@@ -63,78 +69,34 @@ const SectionContent: React.FC<SectionContentProps> = ({
   section,
   index,
   editSection,
-  deleteSection,
-  dragHandleProps
+  deleteSection
+  // dragHandleProps
 }) => {
   const context = useContext(MyContext)
   const { utility, components } = context
   const { icons } = utility
-  const { IconDrag, IconDeleteOutline } = icons
-  const { formItems, btnItems, editor } = components
-  const { InputNumber } = formItems
+  const {
+    //  IconDrag,
+    IconDeleteOutline
+  } = icons
+  const {
+    formItems,
+    btnItems
+    // editor
+  } = components
+  const { InputNumber, Radio, Textarea } = formItems
   const { BtnGroup, BtnText } = btnItems
-  const { component: Editor, onUploadImage } = editor
-
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const blurTimeoutRef = useRef<number | null>(null)
-
-  const handleFocus = () => {
-    // 清除任何待執行的失焦處理
-    if (blurTimeoutRef.current) {
-      clearTimeout(blurTimeoutRef.current)
-      blurTimeoutRef.current = null
-    }
-
-    if (!section.isEdit) {
-      // 聚焦時自動進入編輯模式，同時讓其他 section 離開編輯模式
-      editSection(section.id || '', { isEdit: true })
-    }
-  }
-
-  const handleBlur = (event: React.FocusEvent) => {
-    // 檢查新的焦點目標是否仍在此 section 內
-    const relatedTarget = event.relatedTarget as Node
-    if (relatedTarget && event.currentTarget.contains(relatedTarget)) {
-      return // 焦點仍在 section 內，不做任何處理
-    }
-
-    // 延遲檢查，給 Editor 組件和其他元素時間完成焦點設置
-    blurTimeoutRef.current = setTimeout(() => {
-      // 檢查當前 document.activeElement 是否在此 section 內
-      const activeElement = document.activeElement
-      if (activeElement && sectionRef.current?.contains(activeElement)) {
-        return // 焦點實際上仍在 section 內
-      }
-
-      // 確認 section 仍處於編輯狀態才執行失焦邏輯
-      if (section.isEdit) {
-        editSection(section.id || '', { isEdit: false })
-      }
-      blurTimeoutRef.current = null
-    }, 50) // 增加延遲時間，給 Editor 更多時間初始化
-  }
-
-  // 清理 timeout
-  useEffect(() => {
-    return () => {
-      if (blurTimeoutRef.current) {
-        clearTimeout(blurTimeoutRef.current)
-      }
-    }
-  }, [])
+  // const { component: Editor, onUploadImage } = editor
 
   return (
     <div
-      ref={sectionRef}
-      className={`section ${section.isEdit ? 'editing' : ''}`}
+      className={`section ${context.role === section.role ? 'responding' : ''}`}
       tabIndex={0}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
     >
       <div className='section-title'>
-        <div className='section-title-drag' {...dragHandleProps}>
+        {/* <div className='section-title-drag' {...dragHandleProps}>
           <IconDrag />
-        </div>
+        </div> */}
         <span>題目 {index + 1}</span>
         <span style={{ color: 'var(--color-disabled-icon)' }}>
           [ {section.type} ]
@@ -156,6 +118,24 @@ const SectionContent: React.FC<SectionContentProps> = ({
           )}
         {context.status === StatusEnum.editing && (
           <BtnGroup className='clearfix' style={{ float: 'right' }}>
+            <Radio
+              key='actor'
+              checked={section.role === RoleEnum.actor}
+              onChange={() =>
+                editSection(section.id || '', { role: RoleEnum.actor })
+              }
+            >
+              填寫者
+            </Radio>
+            <Radio
+              key='reviewer'
+              checked={section.role === RoleEnum.reviewer}
+              onChange={() =>
+                editSection(section.id || '', { role: RoleEnum.reviewer })
+              }
+            >
+              評核者
+            </Radio>
             <BtnText
               key='delete'
               theme='danger'
@@ -167,9 +147,16 @@ const SectionContent: React.FC<SectionContentProps> = ({
         )}
       </div>
       <div className='section-body'>
-        {context.status === StatusEnum.editing && section.isEdit ? (
+        {context.status === StatusEnum.editing ? (
           <div className='section-body-question active'>
-            <Editor
+            <Textarea
+              value={section.question}
+              onChange={(e: any) =>
+                editSection(section.id || '', { question: e.target.value })
+              }
+            />
+            {/* <Editor
+              id={section.id}
               title=''
               height={200}
               value={section.question}
@@ -181,7 +168,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
                 editSection(section.id || '', { question: content })
               }}
               onUploadImage={onUploadImage}
-            />
+            /> */}
           </div>
         ) : (
           <div

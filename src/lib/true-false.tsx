@@ -100,7 +100,6 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
         <StyledEditingOption key={option.key}>
           <div>{answerOptions[index]}</div>
           <Input
-            disabled={!props.isEdit}
             value={option.label}
             onChange={(e: any) =>
               editOptions(option.key, 'label', e.target.value)
@@ -109,7 +108,6 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
           {props.mode === ModeEnum.test && (
             <div style={{ width: '200px' }}>
               <Radio
-                disabled={!props.isEdit}
                 checked={option.key === props.answer}
                 onChange={() => editOptions(option.key, 'isChecked')}
               >
@@ -122,27 +120,29 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
     })
   }, [props])
   const renderOptionsResponse = useCallback(() => {
+    const isMatchRole = context.role === props.role
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <div>{answerOptions[index]}</div>
           <div>{option.label}</div>
-          {props.mode === ModeEnum.test && (
-            <div style={{ width: '200px' }}>
-              <Radio
-                checked={option.key === props.response}
-                onChange={() => editOptions(option.key, 'isChecked')}
-              />
-            </div>
-          )}
+          <div style={{ width: '200px' }}>
+            <Radio
+              disabled={context.status === StatusEnum.finished || !isMatchRole}
+              checked={option.key === props.response}
+              onChange={() => editOptions(option.key, 'isChecked')}
+            />
+          </div>
         </StyledOption>
       )
     })
-  }, [props])
+  }, [props, context])
 
   const renderOptions = {
     [StatusEnum.editing]: renderOptionsEditing,
-    [StatusEnum.waiting_for_response]: renderOptionsResponse
+    [StatusEnum.waiting_for_response]: renderOptionsResponse,
+    [StatusEnum.waiting_for_correct]: renderOptionsResponse,
+    [StatusEnum.finished]: renderOptionsResponse
   } as const
   return (
     <>

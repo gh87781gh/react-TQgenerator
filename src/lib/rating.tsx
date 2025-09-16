@@ -78,7 +78,7 @@ export const RatingComponent = (props: RatingProps) => {
           <Radio
             key={index}
             disabled={!isInteractive}
-            checked={isInteractive && props.rating === rating}
+            checked={props.rating === rating}
             onChange={
               isInteractive ? () => editSection('rating', rating) : undefined
             }
@@ -98,7 +98,6 @@ export const RatingComponent = (props: RatingProps) => {
         <StyledRatingType>
           <Radio
             key='number'
-            disabled={!props.isEdit}
             checked={props.ratingType === 'number'}
             onChange={() => editRatingType('number')}
           >
@@ -106,7 +105,6 @@ export const RatingComponent = (props: RatingProps) => {
           </Radio>
           <Radio
             key='click'
-            disabled={!props.isEdit}
             checked={props.ratingType === 'click'}
             onChange={() => editRatingType('click')}
           >
@@ -116,7 +114,6 @@ export const RatingComponent = (props: RatingProps) => {
         <StyledRatingResultItems>
           <span>最小值：</span>
           <InputNumber
-            disabled={!props.isEdit}
             precision={0}
             min={0}
             value={props.min}
@@ -124,7 +121,6 @@ export const RatingComponent = (props: RatingProps) => {
           />
           <span>最大值：</span>
           <InputNumber
-            disabled={!props.isEdit}
             precision={0}
             min={0}
             value={props.max}
@@ -134,7 +130,6 @@ export const RatingComponent = (props: RatingProps) => {
             <>
               <span>分數間隔：</span>
               <InputNumber
-                disabled={!props.isEdit}
                 precision={0}
                 min={0}
                 value={props.ratingGap}
@@ -158,11 +153,13 @@ export const RatingComponent = (props: RatingProps) => {
     )
   }, [props])
   const renderModeResponse = useCallback(() => {
+    const isMatchRole = context.role === props.role
     return (
       <>
         <Label>評分</Label>
         {props.ratingType === 'number' ? (
           <InputNumber
+            disabled={context.status === StatusEnum.finished || !isMatchRole}
             value={props.rating}
             min={props.min}
             max={props.max}
@@ -171,15 +168,24 @@ export const RatingComponent = (props: RatingProps) => {
             style={{ width: '150px' }}
           />
         ) : (
-          <StyledRatingType>{renderClickButton(true)}</StyledRatingType>
+          <StyledRatingType>
+            {renderClickButton(
+              context.status === StatusEnum.finished || !isMatchRole
+                ? false
+                : true
+            )}
+          </StyledRatingType>
         )}
       </>
     )
-  }, [props])
+  }, [props, context])
 
   const renderMode = {
     [StatusEnum.editing]: renderModeEditing,
-    [StatusEnum.waiting_for_response]: renderModeResponse
+    [StatusEnum.preview_editing]: renderModeResponse,
+    [StatusEnum.waiting_for_response]: renderModeResponse,
+    [StatusEnum.waiting_for_correct]: renderModeResponse,
+    [StatusEnum.finished]: renderModeResponse
   } as const
   return <>{renderMode[context.status as keyof typeof renderMode]?.()}</>
 }

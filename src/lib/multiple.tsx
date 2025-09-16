@@ -137,7 +137,6 @@ export const MultipleComponent = (props: MultipleProps) => {
         <StyledEditingOption key={option.key}>
           <div>{getOptionLabel(index)}</div>
           <Input
-            disabled={!props.isEdit}
             value={option.label}
             onChange={(e: any) =>
               editOptions(option.key, 'label', e.target.value)
@@ -146,7 +145,6 @@ export const MultipleComponent = (props: MultipleProps) => {
           <div className='option-result'>
             {props.mode === ModeEnum.test && (
               <Checkbox
-                disabled={!props.isEdit}
                 checked={(props.answer as string[]).includes(option.key)}
                 onChange={() =>
                   editOptions(
@@ -180,7 +178,7 @@ export const MultipleComponent = (props: MultipleProps) => {
                 />
               </>
             )}
-            {props.isEdit && (
+            {context.status === StatusEnum.editing && (
               <BtnText
                 key='delete'
                 theme='danger'
@@ -195,10 +193,12 @@ export const MultipleComponent = (props: MultipleProps) => {
     })
   }, [props])
   const renderOptionsResponse = useCallback(() => {
+    const isMatchRole = context.role === props.role
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <Checkbox
+            disabled={context.status === StatusEnum.finished || !isMatchRole}
             checked={(props.response as string[])?.includes(option.key)}
             onChange={() =>
               editOptions(
@@ -213,17 +213,19 @@ export const MultipleComponent = (props: MultipleProps) => {
         </StyledOption>
       )
     })
-  }, [props])
+  }, [props, context])
 
   const renderOptions = {
     [StatusEnum.editing]: renderOptionsEditing,
-    [StatusEnum.waiting_for_response]: renderOptionsResponse
+    [StatusEnum.waiting_for_response]: renderOptionsResponse,
+    [StatusEnum.waiting_for_correct]: renderOptionsResponse,
+    [StatusEnum.finished]: renderOptionsResponse
   } as const
   return (
     <>
       <Label>選項</Label>
       {renderOptions[context.status as keyof typeof renderOptions]?.()}
-      {context.status === StatusEnum.editing && props.isEdit && (
+      {context.status === StatusEnum.editing && (
         <BtnOutline size='small' onClick={() => addOption()}>
           新增選項
         </BtnOutline>

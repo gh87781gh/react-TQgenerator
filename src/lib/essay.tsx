@@ -25,7 +25,6 @@ export const EssayComponent = (props: EssayProps) => {
       <>
         <Label>解析</Label>
         <Textarea
-          disabled={!props.isEdit}
           value={props.answer}
           onChange={(e: any) => editSection('answer', e.target.value)}
         />
@@ -34,22 +33,26 @@ export const EssayComponent = (props: EssayProps) => {
     [props]
   )
 
-  const renderModeResponse = useCallback(
-    () => (
+  const renderModeResponse = useCallback(() => {
+    const isMatchRole = context.role === props.role
+    return (
       <>
         <Label>答案</Label>
         <Input
+          disabled={context.status === StatusEnum.finished || !isMatchRole}
           value={props.response}
           onChange={(e: any) => editSection('response', e.target.value)}
         />
       </>
-    ),
-    [props]
-  )
+    )
+  }, [props, context])
 
   const renderMode = {
     [StatusEnum.editing]: renderModeEditing,
-    [StatusEnum.waiting_for_response]: renderModeResponse
+    [StatusEnum.preview_editing]: renderModeResponse,
+    [StatusEnum.waiting_for_response]: renderModeResponse,
+    [StatusEnum.waiting_for_correct]: renderModeResponse,
+    [StatusEnum.finished]: renderModeResponse
   } as const
   return <>{renderMode[context.status as keyof typeof renderMode]?.()}</>
 }
