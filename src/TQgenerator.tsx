@@ -341,7 +341,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     )
   }, [props.sections, actions])
   const renderActionCorrect = useCallback(() => {
-    const finalTotalScore = result?.score || 0
+    const finalTotalScore = autoCorrectQuestionnaire(props.sections)
     return (
       <>
         {status === StatusEnum.waiting_for_correct ||
@@ -394,7 +394,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         ) : null}
       </>
     )
-  }, [mode, config, result?.score, actions])
+  }, [mode, config, props.sections, actions])
   const renderActionFinish = useCallback(() => {
     if (config?.isAllowReCorrect) {
       return renderActionCorrect()
@@ -469,7 +469,8 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         reviewerID,
         components,
         utility,
-        result
+        result,
+        config
       }}
     >
       <StyledTQgenerator>

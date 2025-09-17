@@ -154,12 +154,20 @@ export const RatingComponent = (props: RatingProps) => {
   }, [props])
   const renderModeResponse = useCallback(() => {
     const isMatchRole = context.role === props.role
+    console.log(
+      '🔴 context.config?.isAllowUpdateAfterFinished',
+      context.config?.isAllowUpdateAfterFinished
+    )
     return (
       <>
         <Label>評分</Label>
         {props.ratingType === 'number' ? (
           <InputNumber
-            disabled={context.status === StatusEnum.finished || !isMatchRole}
+            disabled={
+              !context.config?.isAllowUpdateAfterFinished ||
+              context.status === StatusEnum.finished ||
+              !isMatchRole
+            }
             value={props.rating}
             min={props.min}
             max={props.max}
@@ -170,7 +178,9 @@ export const RatingComponent = (props: RatingProps) => {
         ) : (
           <StyledRatingType>
             {renderClickButton(
-              context.status === StatusEnum.finished || !isMatchRole
+              !context.config?.isAllowUpdateAfterFinished ||
+                context.status === StatusEnum.finished ||
+                !isMatchRole
                 ? false
                 : true
             )}
