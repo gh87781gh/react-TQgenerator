@@ -2,6 +2,7 @@ import { useCallback, useContext } from 'react'
 import styled from 'styled-components'
 import { RatingProps, TypeKeysEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
+import { isEditable } from '../isEditable'
 
 const StyledRatingType = styled.div`
   display: flex;
@@ -153,21 +154,13 @@ export const RatingComponent = (props: RatingProps) => {
     )
   }, [props])
   const renderModeResponse = useCallback(() => {
-    const isMatchRole = context.role === props.role
-    console.log(
-      '🔴 context.config?.isAllowUpdateAfterFinished',
-      context.config?.isAllowUpdateAfterFinished
-    )
+    const isDisabled = !isEditable(context, props)
     return (
       <>
         <Label>評分</Label>
         {props.ratingType === 'number' ? (
           <InputNumber
-            disabled={
-              !context.config?.isAllowUpdateAfterFinished ||
-              context.status === StatusEnum.finished ||
-              !isMatchRole
-            }
+            disabled={isDisabled}
             value={props.rating}
             min={props.min}
             max={props.max}
@@ -177,13 +170,7 @@ export const RatingComponent = (props: RatingProps) => {
           />
         ) : (
           <StyledRatingType>
-            {renderClickButton(
-              !context.config?.isAllowUpdateAfterFinished ||
-                context.status === StatusEnum.finished ||
-                !isMatchRole
-                ? false
-                : true
-            )}
+            {renderClickButton(isDisabled ? false : true)}
           </StyledRatingType>
         )}
       </>

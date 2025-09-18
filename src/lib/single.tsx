@@ -3,6 +3,7 @@ import { SingleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils'
 import styled from 'styled-components'
+import { isEditable } from '../isEditable'
 
 const StyledEditingOption = styled.div`
   display: flex;
@@ -174,12 +175,12 @@ export const SingleComponent = (props: SingleProps) => {
     })
   }, [props])
   const renderOptionsResponse = useCallback(() => {
-    const isMatchRole = context.role === props.role
+    const isDisabled = !isEditable(context, props)
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <Radio
-            disabled={context.status === StatusEnum.finished || !isMatchRole}
+            disabled={isDisabled}
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >

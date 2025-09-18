@@ -1,6 +1,7 @@
 import { useCallback, useContext } from 'react'
 import { EssayProps, TypeKeysEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
+import { isEditable } from '../isEditable'
 
 export const initEssay: Pick<EssayProps, 'type' | 'answer' | 'response'> = {
   type: TypeKeysEnum.問答題,
@@ -34,12 +35,12 @@ export const EssayComponent = (props: EssayProps) => {
   )
 
   const renderModeResponse = useCallback(() => {
-    const isMatchRole = context.role === props.role
+    const isDisabled = !isEditable(context, props)
     return (
       <>
         <Label>答案</Label>
         <Input
-          disabled={context.status === StatusEnum.finished || !isMatchRole}
+          disabled={isDisabled}
           value={props.response}
           onChange={(e: any) => editSection('response', e.target.value)}
         />

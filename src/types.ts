@@ -137,6 +137,7 @@ export type TQgeneratorProps = {
     isShowCorrectActionPass?: boolean | null
     isShowCorrectActionSubmit?: boolean | null
     isAllowUpdateAfterFinished?: boolean | null
+    isShowRoleSelect?: boolean | null
   }
   assets?: {
     ReviewResultMap?: {

@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { MultipleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils'
+import { isEditable } from '../isEditable'
 
 const StyledEditingOption = styled.div`
   display: flex;
@@ -193,12 +194,12 @@ export const MultipleComponent = (props: MultipleProps) => {
     })
   }, [props])
   const renderOptionsResponse = useCallback(() => {
-    const isMatchRole = context.role === props.role
+    const isDisabled = !isEditable(context, props)
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <Checkbox
-            disabled={context.status === StatusEnum.finished || !isMatchRole}
+            disabled={isDisabled}
             checked={(props.response as string[])?.includes(option.key)}
             onChange={() =>
               editOptions(

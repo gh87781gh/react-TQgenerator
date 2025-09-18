@@ -14,6 +14,7 @@ import {
   ModeEnum,
   StatusEnum
 } from '../types'
+import { isEditable } from '../isEditable'
 
 const StyledAnswerType = styled.div`
   display: flex;
@@ -93,29 +94,28 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
     </>
   )
   const renderModeResponse = useCallback(() => {
-    const isMatchRole = context.role === props.role
-    const disabled = context.status === StatusEnum.finished || !isMatchRole
+    const isDisabled = !isEditable(context, props)
     return (
       <>
         <Label>答案</Label>
         <div style={{ width: '300px' }}>
           {props.answerType === 'input' && (
             <Input
-              disabled={disabled}
+              disabled={isDisabled}
               value={props.response}
               onChange={(e: any) => editSection('response', e.target.value)}
             />
           )}
           {props.answerType === 'number' && (
             <InputNumber
-              disabled={disabled}
+              disabled={isDisabled}
               value={props.response}
               onChange={(val: any) => editSection('response', val || 0)}
             />
           )}
           {props.answerType === 'date' && (
             <DatePicker
-              disabled={disabled}
+              disabled={isDisabled}
               value={responseDate} // 用本地state來存比較安全，避免render錯誤
               onChange={(val: any) => setResponseDate(val)}
             />

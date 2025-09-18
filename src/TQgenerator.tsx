@@ -335,7 +335,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             }
           }}
         >
-          {config?.isAllowSelectReviewer ? '選擇評核者' : '提交測驗'}
+          {config?.isAllowSelectReviewer ? '選擇評核者' : '提交'}
         </BtnPrimary>
       </div>
     )
@@ -346,7 +346,13 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       <>
         {status === StatusEnum.waiting_for_correct ||
         status === StatusEnum.finished ? (
-          <div style={{ marginRight: '0.5rem' }}>總得分：{result?.score}</div>
+          <div style={{ marginRight: '0.5rem' }}>
+            總得分：
+            {
+              finalTotalScore // 即時分數
+              // result?.score // 非即時分數
+            }
+          </div>
         ) : null}
         {config?.isShowCorrectActionPass ? (
           <BtnGroup>

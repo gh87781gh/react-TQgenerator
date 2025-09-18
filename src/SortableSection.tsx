@@ -118,24 +118,28 @@ const SectionContent: React.FC<SectionContentProps> = ({
           )}
         {context.status === StatusEnum.editing && (
           <BtnGroup className='clearfix' style={{ float: 'right' }}>
-            <Radio
-              key='actor'
-              checked={section.role === RoleEnum.actor}
-              onChange={() =>
-                editSection(section.id || '', { role: RoleEnum.actor })
-              }
-            >
-              填寫者
-            </Radio>
-            <Radio
-              key='reviewer'
-              checked={section.role === RoleEnum.reviewer}
-              onChange={() =>
-                editSection(section.id || '', { role: RoleEnum.reviewer })
-              }
-            >
-              評核者
-            </Radio>
+            {context.config?.isShowRoleSelect && (
+              <>
+                <Radio
+                  key='actor'
+                  checked={section.role === RoleEnum.actor}
+                  onChange={() =>
+                    editSection(section.id || '', { role: RoleEnum.actor })
+                  }
+                >
+                  填寫者
+                </Radio>
+                <Radio
+                  key='reviewer'
+                  checked={section.role === RoleEnum.reviewer}
+                  onChange={() =>
+                    editSection(section.id || '', { role: RoleEnum.reviewer })
+                  }
+                >
+                  評核者
+                </Radio>
+              </>
+            )}
             <BtnText
               key='delete'
               theme='danger'

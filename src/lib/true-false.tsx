@@ -2,6 +2,7 @@ import { useContext, useCallback } from 'react'
 import { TrueFalseProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import styled from 'styled-components'
+import { isEditable } from '../isEditable'
 
 const StyledEditingOption = styled.div`
   display: flex;
@@ -120,7 +121,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
     })
   }, [props])
   const renderOptionsResponse = useCallback(() => {
-    const isMatchRole = context.role === props.role
+    const isDisabled = !isEditable(context, props)
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
@@ -128,7 +129,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
           <div>{option.label}</div>
           <div style={{ width: '200px' }}>
             <Radio
-              disabled={context.status === StatusEnum.finished || !isMatchRole}
+              disabled={isDisabled}
               checked={option.key === props.response}
               onChange={() => editOptions(option.key, 'isChecked')}
             />
