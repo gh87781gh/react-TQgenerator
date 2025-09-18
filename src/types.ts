@@ -128,12 +128,14 @@ export type SectionProps<T extends TypeKeysEnum> = SectionTypeMap[T]
 export type TQgeneratorProps = {
   config?: {
     isAllowSelectReviewer?: boolean | null
+    isAllowReSelectReviewer?: boolean | null
     isAllowReCorrect?: boolean | null
     isPreviewEditing?: boolean | null
     isAllowReview?: boolean | null
     isAllowReviewScore?: boolean | null
     isAllowReviewWithAnswer?: boolean | null
     isShowCorrectContent?: boolean | null
+    isShowCurrentFinalTotalScore?: boolean | null
     isShowCorrectActionPass?: boolean | null
     isShowCorrectActionSubmit?: boolean | null
     isAllowUpdateAfterFinished?: boolean | null
@@ -154,7 +156,6 @@ export type TQgeneratorProps = {
     onPreviewEditing?: () => void
     onSubmitResponse?: (totalScore: number, reviewerID: string | null) => void
     onSubmitCorrect?: (totalScore: number, reviewResult: number | null) => void
-    onSubmitFinish?: () => void
   }
 
   mode: ModeEnum | null

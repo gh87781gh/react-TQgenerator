@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import _ from 'lodash'
@@ -344,8 +344,14 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     const finalTotalScore = autoCorrectQuestionnaire(props.sections)
     return (
       <>
-        {status === StatusEnum.waiting_for_correct ||
-        status === StatusEnum.finished ? (
+        {config?.isAllowReSelectReviewer && (
+          <div className='section-body-add'>
+            <BtnPrimary onClick={() => setIsShowSelectReviewer(true)}>
+              重新指派評核者
+            </BtnPrimary>
+          </div>
+        )}
+        {config?.isShowCurrentFinalTotalScore && (
           <div style={{ marginRight: '0.5rem' }}>
             總得分：
             {
@@ -353,7 +359,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               // result?.score // 非即時分數
             }
           </div>
-        ) : null}
+        )}
         {config?.isShowCorrectActionPass ? (
           <BtnGroup>
             <BtnOutline
@@ -450,18 +456,17 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       : []
   }
 
-  if (
-    status === StatusEnum.waiting_for_correct &&
-    !config?.isShowCorrectContent
-  ) {
-    // TODO 加上沒有權限查看的提示
-    return null
-  }
+  const isShowSections = useMemo(() => {
+    if (status === StatusEnum.waiting_for_correct) {
+      return config?.isShowCorrectContent
+    }
 
-  if (status === StatusEnum.finished && !config?.isAllowReview) {
-    // TODO 加上沒有權限查看的提示
-    return null
-  }
+    if (status === StatusEnum.finished) {
+      return config?.isAllowReview
+    }
+
+    return true
+  }, [config, status])
 
   return (
     <MyContext.Provider
@@ -482,19 +487,20 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       <StyledTQgenerator>
         {renderActionSubmitEditing?.()}
 
-        {props.sections
-          .filter((section) => section.id !== null)
-          .map((section, index) => {
-            return (
-              <SectionContent
-                key={section.id}
-                section={section}
-                index={index}
-                editSection={editSection}
-                deleteSection={deleteSection}
-              />
-            )
-          })}
+        {isShowSections &&
+          props.sections
+            .filter((section) => section.id !== null)
+            .map((section, index) => {
+              return (
+                <SectionContent
+                  key={section.id}
+                  section={section}
+                  index={index}
+                  editSection={editSection}
+                  deleteSection={deleteSection}
+                />
+              )
+            })}
 
         {/* <DndContext
           sensors={[mouseSensor, pointerSensor]}
