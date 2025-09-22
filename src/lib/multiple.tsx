@@ -79,8 +79,8 @@ export const MultipleComponent = (props: MultipleProps) => {
       key: 'label' | 'isChecked' | 'optionScore',
       value?: string | boolean | number
     ) => {
+      let { answer, response, options, finalScore } = props
       if (key === 'isChecked') {
-        let { answer, response } = props
         if (context.status === StatusEnum.editing) {
           if (value && !(answer as string[])?.includes(optionKey)) {
             answer = [...(answer as string[]), optionKey]
@@ -88,18 +88,39 @@ export const MultipleComponent = (props: MultipleProps) => {
             answer = (answer as string[]).filter((key) => key !== optionKey)
           }
         }
-        if (context.status === StatusEnum.waiting_for_response) {
+        if (
+          context.status === StatusEnum.waiting_for_response ||
+          context.status === StatusEnum.waiting_for_correct
+        ) {
           if (value && !(response as string[])?.includes(optionKey)) {
             response = [...(response as string[]), optionKey]
           } else {
             response = (response as string[]).filter((key) => key !== optionKey)
           }
+          /**
+           * 在問卷裡，分數做在答案上，所以只要有勾選，就要加進該題得分裡
+           * 在測驗裡，分數做在題目上，所選答案要完全符合正確答案，才能獲得該題的分數
+           */
+          if (context.mode === ModeEnum.test) {
+            // 檢查response是否完全符合answer，符合則加該題分數，不符合則得0分
+            const isCorrect = (response as string[]).every((key) =>
+              (answer as string[]).includes(key)
+            )
+            finalScore = isCorrect ? props.score : 0
+          } else if (context.mode === ModeEnum.questionnaire) {
+            // 抓所有已勾選的option，將其optionScore累加到該題得分裡
+            const correctOptions = options.filter((option) =>
+              (response as string[]).includes(option.key)
+            )
+            finalScore = correctOptions.reduce((acc, option) => {
+              return (acc += option.optionScore || 0)
+            }, 0)
+          }
         }
-        props.updateSection({ ...props, answer, response })
+        props.updateSection({ ...props, answer, response, finalScore })
       }
 
       if (key === 'label' || key === 'optionScore') {
-        const { options } = props
         const newOptions = options.map((option) => {
           if (option.key === optionKey) {
             return { ...option, [key]: value }
@@ -218,6 +239,7 @@ export const MultipleComponent = (props: MultipleProps) => {
 
   const renderOptions = {
     [StatusEnum.editing]: renderOptionsEditing,
+    [StatusEnum.preview_editing]: renderOptionsResponse,
     [StatusEnum.waiting_for_response]: renderOptionsResponse,
     [StatusEnum.waiting_for_correct]: renderOptionsResponse,
     [StatusEnum.finished]: renderOptionsResponse

@@ -127,6 +127,7 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
 
   const renderOptions = {
     [StatusEnum.editing]: renderModeEditing,
+    [StatusEnum.preview_editing]: renderModeResponse,
     [StatusEnum.waiting_for_response]: renderModeResponse,
     [StatusEnum.waiting_for_correct]: renderModeResponse,
     [StatusEnum.finished]: renderModeResponse

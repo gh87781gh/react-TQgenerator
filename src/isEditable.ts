@@ -5,7 +5,6 @@ import { MyContextType } from './TQgenerator'
 const isEditable = (context: MyContextType, props: SectionTypeMap[TypeKeysEnum]) => {
   let isEditable = null
 
-
   switch (context.status) {
     case StatusEnum.editing:
       isEditable = true
@@ -14,8 +13,6 @@ const isEditable = (context: MyContextType, props: SectionTypeMap[TypeKeysEnum])
       isEditable = false
       break
     case StatusEnum.waiting_for_response:
-      isEditable = props.role === context.role
-      break
     case StatusEnum.waiting_for_correct:
       isEditable = props.role === context.role
       break
@@ -24,7 +21,7 @@ const isEditable = (context: MyContextType, props: SectionTypeMap[TypeKeysEnum])
         props.role === context.role && context.config?.isAllowReCorrect && context.config?.isAllowUpdateAfterFinished
       break
     default:
-      console.error('🔴 isEditable: status is not valid')
+      console.error('🔴 isEditable: status configuration is not valid')
       break
   }
 

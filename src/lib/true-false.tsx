@@ -26,6 +26,10 @@ const StyledOption = styled.div`
     margin-bottom: var(--gap-small);
   }
 
+  &.passed {
+    color: var(--color-success);
+  }
+
   > *:not(:last-child) {
     margin-right: var(--gap-normal);
   }
@@ -69,19 +73,21 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
       key: 'label' | 'isChecked',
       value?: string | boolean | number
     ) => {
+      let { answer, response, options, finalScore } = props
       if (key === 'isChecked') {
-        let { answer, response } = props
         if (context.status === StatusEnum.editing) {
           answer = optionKey
         }
         if (context.status === StatusEnum.waiting_for_response) {
           response = optionKey
+          if (context.mode === ModeEnum.test) {
+            finalScore = response === answer ? props.score : 0
+          }
         }
-        props.updateSection({ ...props, answer, response })
+        props.updateSection({ ...props, answer, response, finalScore })
       }
 
       if (key === 'label') {
-        const { options } = props
         const newOptions = options.map((option) => {
           if (key === 'label') {
             if (option.key === optionKey) {
@@ -125,25 +131,41 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
+          <Radio
+            disabled={isDisabled}
+            checked={option.key === props.response}
+            onChange={() => editOptions(option.key, 'isChecked')}
+          />
           <div>{answerOptions[index]}</div>
           <div>{option.label}</div>
-          <div style={{ width: '200px' }}>
-            <Radio
-              disabled={isDisabled}
-              checked={option.key === props.response}
-              onChange={() => editOptions(option.key, 'isChecked')}
-            />
-          </div>
         </StyledOption>
       )
     })
   }, [props, context])
+  const renderOptionsFinished = useCallback(() => {
+    return props.options.map((option, index) => {
+      const isPassed =
+        props.answer === props.response && props.response === option.key
+      return (
+        <StyledOption className={isPassed ? 'passed' : ''} key={option.key}>
+          <Radio
+            disabled={true}
+            checked={option.key === props.response}
+            onChange={() => editOptions(option.key, 'isChecked')}
+          />
+          <div>{answerOptions[index]}</div>
+          <div>{option.label}</div>
+        </StyledOption>
+      )
+    })
+  }, [props])
 
   const renderOptions = {
     [StatusEnum.editing]: renderOptionsEditing,
+    [StatusEnum.preview_editing]: renderOptionsResponse,
     [StatusEnum.waiting_for_response]: renderOptionsResponse,
     [StatusEnum.waiting_for_correct]: renderOptionsResponse,
-    [StatusEnum.finished]: renderOptionsResponse
+    [StatusEnum.finished]: renderOptionsFinished
   } as const
   return (
     <>

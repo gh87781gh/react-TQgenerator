@@ -76,19 +76,26 @@ export const SingleComponent = (props: SingleProps) => {
       key: 'label' | 'isChecked' | 'optionScore',
       value?: string | boolean | number
     ) => {
+      let { answer, response, options, finalScore } = props
+
       if (key === 'isChecked') {
-        let { answer, response } = props
         if (context.status === StatusEnum.editing) {
           answer = optionKey
         }
         if (context.status === StatusEnum.waiting_for_response) {
           response = optionKey
+          if (context.mode === ModeEnum.test) {
+            finalScore = response === answer ? props.score : 0
+          } else if (context.mode === ModeEnum.questionnaire) {
+            finalScore =
+              options.find((option) => option.key === optionKey)?.optionScore ||
+              0
+          }
         }
-        props.updateSection({ ...props, answer, response })
+        props.updateSection({ ...props, answer, response, finalScore })
       }
 
       if (key === 'label' || key === 'optionScore') {
-        const { options } = props
         const newOptions = options.map((option) => {
           if (option.key === optionKey) {
             return { ...option, [key]: value }

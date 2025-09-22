@@ -33,7 +33,7 @@ import { initRating } from './lib/rating'
 
 // import { SortableItem } from './SortableSection'
 import { SectionContent } from './SortableSection'
-import { autoCorrectQuestionnaire } from './autoCorrect'
+import { autoCorrectQuestionnaire, autoCorrectTest } from './autoCorrect'
 // import { autoCorrectTest } from './autoCorrect'
 
 const StyledTQgenerator = styled.div`
@@ -330,8 +330,13 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             if (config?.isAllowSelectReviewer) {
               setIsShowSelectReviewer(true)
             } else {
-              const score = autoCorrectQuestionnaire(props.sections)
-              actions?.onSubmitResponse?.(score, null)
+              if (mode === ModeEnum.test) {
+                const score = autoCorrectTest(props.sections)
+                actions?.onSubmitResponse?.(score, null)
+              } else if (mode === ModeEnum.questionnaire) {
+                const score = autoCorrectQuestionnaire(props.sections)
+                actions?.onSubmitResponse?.(score, null)
+              }
             }
           }}
         >
@@ -341,7 +346,12 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     )
   }, [props.sections, actions])
   const renderActionCorrect = useCallback(() => {
-    const finalTotalScore = autoCorrectQuestionnaire(props.sections)
+    let finalTotalScore = 0
+    if (mode === ModeEnum.test) {
+      finalTotalScore = autoCorrectTest(props.sections)
+    } else if (mode === ModeEnum.questionnaire) {
+      finalTotalScore = autoCorrectQuestionnaire(props.sections)
+    }
     return (
       <>
         {config?.isAllowReSelectReviewer && (
@@ -557,7 +567,12 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             disabled={!selectedReviewerID}
             onClick={() => {
               setIsShowSelectReviewer(false)
-              const score = autoCorrectQuestionnaire(props.sections)
+              let score = 0
+              if (mode === ModeEnum.test) {
+                score = autoCorrectTest(props.sections)
+              } else if (mode === ModeEnum.questionnaire) {
+                score = autoCorrectQuestionnaire(props.sections)
+              }
               actions?.onSubmitResponse?.(score, selectedReviewerID)
             }}
           >

@@ -4,7 +4,6 @@ export enum ModeEnum {
   test = 'test',
   questionnaire = 'questionnaire'
 }
-
 export enum StatusEnum {
   editing = 'editing',
   preview_editing = 'preview_editing',
@@ -15,6 +14,10 @@ export enum StatusEnum {
 export enum RoleEnum {
   actor = 'actor',
   reviewer = 'reviewer'
+}
+export enum CoopModeEnum {
+  全部只有填寫者 = 'single',
+  有填寫者也有評核者 = 'multiple'
 }
 
 export type ModeType = keyof typeof ModeEnum
@@ -41,7 +44,7 @@ interface BaseSectionProps {
   question: string // 問題
   answer: string | number | null | string[] | dayjs.Dayjs  // 解析
   response: string | number | null | string[] | dayjs.Dayjs // 回答
-  score: number // 分數
+  score: number // 題目設定的分數，測驗才有
   finalScore: number //得分
 }
 export const initBaseSection: BaseSectionProps = {
@@ -53,7 +56,7 @@ export const initBaseSection: BaseSectionProps = {
   answer: null,
   response: null,
   score: 0,
-  finalScore: 0
+  finalScore: 0,
 }
 
 export interface TrueFalseProps extends BaseSectionProps {
@@ -139,7 +142,6 @@ export type TQgeneratorProps = {
     isShowCorrectActionPass?: boolean | null
     isShowCorrectActionSubmit?: boolean | null
     isAllowUpdateAfterFinished?: boolean | null
-    isShowRoleSelect?: boolean | null
   }
   assets?: {
     ReviewResultMap?: {
