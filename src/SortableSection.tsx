@@ -79,11 +79,8 @@ const SectionContent: React.FC<SectionContentProps> = ({
     //  IconDrag,
     IconDeleteOutline
   } = icons
-  const {
-    formItems,
-    btnItems
-    // editor
-  } = components
+  const { formItems, btnItems, editor } = components
+  const { component: Editor } = editor
   const { InputNumber, Radio, Textarea } = formItems
   const { BtnGroup, BtnText } = btnItems
   // const { component: Editor, onUploadImage } = editor
@@ -155,6 +152,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
                 editSection(section.id || '', { question: e.target.value })
               }
             />
+
+            {/* TODO */}
+            <Editor />
             {/* <Editor
               id={section.id}
               title=''
