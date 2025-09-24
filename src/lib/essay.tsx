@@ -1,5 +1,5 @@
 import { useCallback, useContext } from 'react'
-import { EssayProps, TypeKeysEnum, StatusEnum } from '../types'
+import { EssayProps, TypeKeysEnum, StatusEnum, ModeEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import { isEditable } from '../isEditable'
 
@@ -21,18 +21,19 @@ export const EssayComponent = (props: EssayProps) => {
     },
     [props]
   )
-  const renderModeEditing = useCallback(
-    () => (
-      <>
-        <Label>解析</Label>
-        <Textarea
-          value={props.answer}
-          onChange={(e: any) => editSection('answer', e.target.value)}
-        />
-      </>
-    ),
-    [props]
-  )
+  const renderModeEditing = useCallback(() => {
+    return (
+      props.mode === ModeEnum.test && (
+        <>
+          <Label>解析</Label>
+          <Textarea
+            value={props.answer}
+            onChange={(e: any) => editSection('answer', e.target.value)}
+          />
+        </>
+      )
+    )
+  }, [props])
 
   const renderModeResponse = useCallback(() => {
     const isDisabled = !isEditable(context, props)

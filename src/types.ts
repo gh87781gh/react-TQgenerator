@@ -151,7 +151,8 @@ export type TQgeneratorProps = {
       key: string
       label: string
       value: string
-    }[]
+    }[],
+    classTeacherID?: string | null
   }
   actions?: {
     onSubmitEditing?: () => void

@@ -320,7 +320,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }, [type, status, addSection])
   const [isShowSelectReviewer, setIsShowSelectReviewer] = useState(false)
   const [selectedReviewerID, setSelectedReviewerID] = useState<string | null>(
-    null
+    assets?.classTeacherID ?? null
   )
   const renderActionResponse = useCallback(() => {
     return (
@@ -376,7 +376,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               onClick={() =>
                 actions?.onSubmitCorrect?.(
                   finalTotalScore,
-                  assets?.ReviewResultMap?.不通過 ?? null
+                  assets?.ReviewResultMap?.評核為不通過 ?? null
                 )
               }
             >
@@ -390,7 +390,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               onClick={() =>
                 actions?.onSubmitCorrect?.(
                   finalTotalScore,
-                  assets?.ReviewResultMap?.通過 ?? null
+                  assets?.ReviewResultMap?.評核為通過 ?? null
                 )
               }
             >
@@ -416,7 +416,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         ) : null}
       </>
     )
-  }, [mode, config, props.sections, actions])
+  }, [mode, config, props.sections, actions, assets])
   const renderActionFinish = useCallback(() => {
     if (config?.isAllowReCorrect) {
       return renderActionCorrect()
@@ -584,6 +584,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           options={assets?.reviewerOptions}
           value={selectedReviewerID}
           onChange={(value: any) => {
+            console.log('🔴', value)
             setSelectedReviewerID(value)
           }}
         />
