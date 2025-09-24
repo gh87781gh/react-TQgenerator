@@ -185,7 +185,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }
 
   const { formItems, btnItems, modal: Modal } = components
-  const { Select } = formItems
+  const { Select, SearchSelect } = formItems
   const { BtnPrimary, BtnOutline, BtnGroup } = btnItems
 
   const [type, setType] = useState<TypeKeysEnum>(
@@ -472,7 +472,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     }
 
     if (status === StatusEnum.finished) {
-      return config?.isAllowReview
+      return config?.isShowCorrectContentResult
     }
 
     return true
@@ -580,7 +580,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           </BtnPrimary>
         ]}
       >
-        <Select
+        <SearchSelect
           options={assets?.reviewerOptions}
           value={selectedReviewerID}
           onChange={(value: any) => {

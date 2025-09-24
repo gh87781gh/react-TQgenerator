@@ -177,7 +177,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
         ) : (
           <div
             className={`section-body-question ${!section.question && 'empty'}`}
-            dangerouslySetInnerHTML={{ __html: section.question }}
+            dangerouslySetInnerHTML={{
+              __html: section.question.replace(/\n/g, '<br />')
+            }}
           />
         )}
         <div className='section-body-question-option'>

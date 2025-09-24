@@ -134,10 +134,10 @@ export type TQgeneratorProps = {
     isAllowReSelectReviewer?: boolean | null
     isAllowReCorrect?: boolean | null
     isPreviewEditing?: boolean | null
-    isAllowReview?: boolean | null
     isAllowReviewScore?: boolean | null
     isAllowReviewWithAnswer?: boolean | null
     isShowCorrectContent?: boolean | null
+    isShowCorrectContentResult?: boolean | null
     isShowCurrentFinalTotalScore?: boolean | null
     isShowCorrectActionPass?: boolean | null
     isShowCorrectActionSubmit?: boolean | null
@@ -178,6 +178,7 @@ export type TQgeneratorProps = {
   components: {
     formItems: {
       Select: React.ComponentType<any>
+      SearchSelect: React.ComponentType<any>
       InputNumber: React.ComponentType<any>
       Input: React.ComponentType<any>
       Radio: React.ComponentType<any>

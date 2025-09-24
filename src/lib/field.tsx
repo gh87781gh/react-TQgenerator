@@ -98,29 +98,34 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
     return (
       <>
         <Label>答案</Label>
-        <div style={{ width: '300px' }}>
-          {props.answerType === 'input' && (
+
+        {props.answerType === 'input' && (
+          <div style={{ width: '100%' }}>
             <Input
               disabled={isDisabled}
               value={props.response}
               onChange={(e: any) => editSection('response', e.target.value)}
             />
-          )}
-          {props.answerType === 'number' && (
+          </div>
+        )}
+        {props.answerType === 'number' && (
+          <div style={{ width: '300px' }}>
             <InputNumber
               disabled={isDisabled}
               value={props.response}
               onChange={(val: any) => editSection('response', val || 0)}
             />
-          )}
-          {props.answerType === 'date' && (
+          </div>
+        )}
+        {props.answerType === 'date' && (
+          <div style={{ width: '300px' }}>
             <DatePicker
               disabled={isDisabled}
               value={responseDate} // 用本地state來存比較安全，避免render錯誤
               onChange={(val: any) => setResponseDate(val)}
             />
-          )}
-        </div>
+          </div>
+        )}
       </>
     )
   }, [props, context])
