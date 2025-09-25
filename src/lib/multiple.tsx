@@ -90,7 +90,9 @@ export const MultipleComponent = (props: MultipleProps) => {
         }
         if (
           context.status === StatusEnum.waiting_for_response ||
-          context.status === StatusEnum.waiting_for_correct
+          context.status === StatusEnum.waiting_for_correct ||
+          (context.status === StatusEnum.finished &&
+            context.config?.isAllowReCorrect)
         ) {
           if (value && !(response as string[])?.includes(optionKey)) {
             response = [...(response as string[]), optionKey]

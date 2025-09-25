@@ -78,7 +78,12 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
         if (context.status === StatusEnum.editing) {
           answer = optionKey
         }
-        if (context.status === StatusEnum.waiting_for_response) {
+        if (
+          context.status === StatusEnum.waiting_for_response ||
+          context.status === StatusEnum.waiting_for_correct ||
+          (context.status === StatusEnum.finished &&
+            context.config?.isAllowReCorrect)
+        ) {
           response = optionKey
           if (context.mode === ModeEnum.test) {
             finalScore = response === answer ? props.score : 0
