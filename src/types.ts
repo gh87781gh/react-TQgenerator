@@ -44,7 +44,7 @@ interface BaseSectionProps {
   question: string // 問題
   answer: string | number | null | string[] | dayjs.Dayjs  // 解析
   response: string | number | null | string[] | dayjs.Dayjs // 回答
-  score: number // 題目設定的分數，測驗才有
+  score: number // 題目設定的分數，測驗才用得到
   finalScore: number //得分
 }
 export const initBaseSection: BaseSectionProps = {

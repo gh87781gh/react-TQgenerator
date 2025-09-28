@@ -13,7 +13,7 @@ export const EssayComponent = (props: EssayProps) => {
   const context = useContext(MyContext)
   const { components } = context
   const { formItems } = components
-  const { Label, Textarea, Input } = formItems
+  const { Label, Textarea } = formItems
 
   const editSection = useCallback(
     (key: string, value: string | number) => {
@@ -40,7 +40,7 @@ export const EssayComponent = (props: EssayProps) => {
     return (
       <>
         <Label>答案</Label>
-        <Input
+        <Textarea
           disabled={isDisabled}
           value={props.response}
           onChange={(e: any) => editSection('response', e.target.value)}

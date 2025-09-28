@@ -140,9 +140,9 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
             disabled={isDisabled}
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
-          />
-          <div>{answerOptions[index]}</div>
-          <div>{option.label}</div>
+          >
+            {answerOptions[index]} {option.label}
+          </Radio>
         </StyledOption>
       )
     })
