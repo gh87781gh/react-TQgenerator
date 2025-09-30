@@ -76,9 +76,30 @@ const StyledTQgenerator = styled.div`
     > * {
       display: inline-block;
       vertical-align: middle;
+    }
 
-      &:not(:last-child) {
+    > span {
+      color: var(--color-disabled-icon);
+
+      &:not(:last-child)::after {
+        content: '|';
+        margin-left: 1rem;
         margin-right: 1rem;
+      }
+    }
+
+    .section-title-status {
+      font-style: normal;
+      color: var(--color-white);
+      background-color: var(--color-disabled);
+      padding: 0.25rem 0.75rem;
+      border-radius: 30px;
+
+      &.passed {
+        background-color: var(--color-success);
+      }
+      &.failed {
+        background-color: var(--color-danger);
       }
     }
 
@@ -380,11 +401,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                 )
               }
             >
-              {status === StatusEnum.waiting_for_correct
-                ? '不通過'
-                : status === StatusEnum.finished
-                ? '更新為不通過'
-                : '-'}
+              {!config?.isReCorrecting ? '不通過' : '更新為不通過'}
             </BtnOutline>
             <BtnPrimary
               onClick={() =>
@@ -394,56 +411,42 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                 )
               }
             >
-              {status === StatusEnum.waiting_for_correct
-                ? '通過'
-                : status === StatusEnum.finished
-                ? '更新為通過'
-                : '-'}
+              {!config?.isReCorrecting ? '通過' : '更新為通過'}
             </BtnPrimary>
           </BtnGroup>
-        ) : config?.isShowCorrectActionSubmit ? (
+        ) : null}
+        {config?.isShowCorrectActionSubmit ? (
           <BtnPrimary
             onClick={() => {
               actions?.onSubmitCorrect?.(finalTotalScore, null)
             }}
           >
-            {status === StatusEnum.waiting_for_correct
-              ? '送出評核'
-              : status === StatusEnum.finished
-              ? '更新評核'
-              : '-'}
+            {!config?.isReCorrecting
+              ? `送出${
+                  mode === ModeEnum.test
+                    ? '批改'
+                    : mode === ModeEnum.questionnaire
+                    ? '評核'
+                    : ''
+                }`
+              : `更新${
+                  mode === ModeEnum.test
+                    ? '批改'
+                    : mode === ModeEnum.questionnaire
+                    ? '評核'
+                    : ''
+                }`}
           </BtnPrimary>
         ) : null}
       </>
     )
   }, [mode, config, props.sections, actions, assets])
-  const renderActionFinish = useCallback(() => {
-    if (config?.isAllowReCorrect) {
-      return renderActionCorrect()
-    }
-    // TODO 填寫者重新測驗
-    // if (config?.isAllowReviewScore) {
-    //   return (
-    //     <div
-    //       style={{
-    //         width: '100%',
-    //         height: '100px',
-    //         display: 'flex',
-    //         justifyContent: 'center',
-    //         alignItems: 'center'
-    //       }}
-    //     >
-    //       總得分：{result?.score}
-    //     </div>
-    //   )
-    // }
-    return null
-  }, [result?.score, config, actions])
   const renderAction = {
     [StatusEnum.editing]: renderActionEditing,
+    [StatusEnum.preview_editing]: () => null,
     [StatusEnum.waiting_for_response]: renderActionResponse,
     [StatusEnum.waiting_for_correct]: renderActionCorrect,
-    [StatusEnum.finished]: renderActionFinish
+    [StatusEnum.finished]: () => null
   }
 
   const getOptions = () => {
@@ -584,7 +587,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           options={assets?.reviewerOptions}
           value={selectedReviewerID}
           onChange={(value: any) => {
-            console.log('🔴', value)
             setSelectedReviewerID(value)
           }}
         />

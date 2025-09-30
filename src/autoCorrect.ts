@@ -7,6 +7,8 @@ const autoCorrectTest = (sections: SectionProps<TypeKeysEnum>[]) => {
       case TypeKeysEnum.是非題:
       case TypeKeysEnum.單選題:
       case TypeKeysEnum.多選題:
+      case TypeKeysEnum.填充題:
+      case TypeKeysEnum.問答題:
         totalScore += section.finalScore || 0
         break
       default:

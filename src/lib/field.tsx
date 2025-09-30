@@ -14,7 +14,6 @@ import {
   ModeEnum,
   StatusEnum
 } from '../types'
-import { isEditable } from '../isEditable'
 
 const StyledAnswerType = styled.div`
   display: flex;
@@ -40,9 +39,12 @@ export const initField: Pick<
 
 export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
   const context = useContext(MyContext)
-  const { components } = context
-  const { formItems } = components
+  const { components, utility } = context
+  const { icons } = utility
+  const { IconPassedCircle, IconFailedCircle } = icons
+  const { formItems, btnItems } = components
   const { Label, Radio, Textarea, Input, InputNumber, DatePicker } = formItems
+  const { BtnGroup, BtnPrimary } = btnItems
 
   const [responseDate, setResponseDate] = useState<dayjs.Dayjs | null>(
     dayjs(props.response).isValid() ? dayjs(props.response) : null
@@ -55,14 +57,22 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
   }, [responseDate])
 
   const editSection = useCallback(
-    (key: string, value: string | number) => {
-      let { response } = props
+    (key: string, value: string | number | boolean) => {
+      let { response, finalScore } = props
       if (key === 'answerType') {
         if (value === 'date') response = null
         if (value === 'input') response = ''
         if (value === 'number') response = 0
       }
-      props.updateSection({ ...props, response, [key]: value })
+
+      if (key === 'isPass') {
+        if (value === true) {
+          finalScore = props.score
+        } else {
+          finalScore = 0
+        }
+      }
+      props.updateSection({ ...props, response, finalScore, [key]: value })
     },
     [props]
   )
@@ -93,16 +103,46 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
       )}
     </>
   )
-  const renderModeResponse = useCallback(() => {
-    const isDisabled = !isEditable(context, props)
+  const renderModePreviewEditing = () => (
+    <>
+      <Label>答案</Label>
+      {props.answerType === 'input' && (
+        <div style={{ width: '100%' }}>
+          <Input
+            disabled={true}
+            value={props.response}
+            onChange={(e: any) => editSection('response', e.target.value)}
+          />
+        </div>
+      )}
+      {props.answerType === 'number' && (
+        <div style={{ width: '300px' }}>
+          <InputNumber
+            disabled={true}
+            value={props.response}
+            onChange={(val: any) => editSection('response', val || 0)}
+          />
+        </div>
+      )}
+      {props.answerType === 'date' && (
+        <div style={{ width: '300px' }}>
+          <DatePicker
+            disabled={true}
+            value={responseDate} // 用本地state來存比較安全，避免render錯誤
+            onChange={(val: any) => setResponseDate(val)}
+          />
+        </div>
+      )}
+    </>
+  )
+  const renderModeResponse = () => {
     return (
       <>
         <Label>答案</Label>
-
         {props.answerType === 'input' && (
           <div style={{ width: '100%' }}>
             <Input
-              disabled={isDisabled}
+              disabled={props.role !== context.role}
               value={props.response}
               onChange={(e: any) => editSection('response', e.target.value)}
             />
@@ -111,7 +151,7 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
         {props.answerType === 'number' && (
           <div style={{ width: '300px' }}>
             <InputNumber
-              disabled={isDisabled}
+              disabled={props.role !== context.role}
               value={props.response}
               onChange={(val: any) => editSection('response', val || 0)}
             />
@@ -120,7 +160,7 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
         {props.answerType === 'date' && (
           <div style={{ width: '300px' }}>
             <DatePicker
-              disabled={isDisabled}
+              disabled={props.role !== context.role}
               value={responseDate} // 用本地state來存比較安全，避免render錯誤
               onChange={(val: any) => setResponseDate(val)}
             />
@@ -128,14 +168,118 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
         )}
       </>
     )
-  }, [props, context])
+  }
+  const renderModeCorrect = () => {
+    return (
+      <>
+        <Label>答案</Label>
+        {props.answerType === 'input' && (
+          <div style={{ width: '100%' }}>
+            <Input
+              disabled={props.role !== context.role}
+              value={props.response}
+              onChange={(e: any) => editSection('response', e.target.value)}
+            />
+          </div>
+        )}
+        {props.answerType === 'number' && (
+          <div style={{ width: '300px' }}>
+            <InputNumber
+              disabled={props.role !== context.role}
+              value={props.response}
+              onChange={(val: any) => editSection('response', val || 0)}
+            />
+          </div>
+        )}
+        {props.answerType === 'date' && (
+          <div style={{ width: '300px' }}>
+            <DatePicker
+              disabled={props.role !== context.role}
+              value={responseDate} // 用本地state來存比較安全，避免render錯誤
+              onChange={(val: any) => setResponseDate(val)}
+            />
+          </div>
+        )}
+        {props.mode === ModeEnum.test && props.role === context.role && (
+          <>
+            <div style={{ textAlign: 'right' }}>
+              <BtnGroup>
+                <BtnPrimary
+                  theme='danger'
+                  onClick={() => editSection('isPass', false)}
+                >
+                  <IconFailedCircle /> 答錯
+                </BtnPrimary>
+                <BtnPrimary
+                  theme='success'
+                  onClick={() => editSection('isPass', true)}
+                >
+                  <IconPassedCircle /> 正確
+                </BtnPrimary>
+              </BtnGroup>
+            </div>
+            <Label>解析</Label>
+            <Textarea
+              value={props.answer}
+              onChange={(e: any) => editSection('answer', e.target.value)}
+            />
+          </>
+        )}
+      </>
+    )
+  }
+  const renderModeFinished = () => {
+    return (
+      <>
+        <Label>答案</Label>
+        {props.answerType === 'input' && (
+          <div style={{ width: '100%' }}>
+            <Input
+              disabled={true}
+              value={props.response}
+              onChange={(e: any) => editSection('response', e.target.value)}
+            />
+          </div>
+        )}
+        {props.answerType === 'number' && (
+          <div style={{ width: '300px' }}>
+            <InputNumber
+              disabled={true}
+              value={props.response}
+              onChange={(val: any) => editSection('response', val || 0)}
+            />
+          </div>
+        )}
+        {props.answerType === 'date' && (
+          <div style={{ width: '300px' }}>
+            <DatePicker
+              disabled={true}
+              value={responseDate} // 用本地state來存比較安全，避免render錯誤
+              onChange={(val: any) => setResponseDate(val)}
+            />
+          </div>
+        )}
+        {props.mode === ModeEnum.test &&
+          context.config?.isAllowReviewWithAnswer && (
+            <>
+              <Label>解析</Label>
+              <Textarea
+                disabled={true}
+                value={props.answer}
+                onChange={(e: any) => editSection('answer', e.target.value)}
+              />
+            </>
+          )}
+      </>
+    )
+  }
 
   const renderOptions = {
     [StatusEnum.editing]: renderModeEditing,
-    [StatusEnum.preview_editing]: renderModeResponse,
+    [StatusEnum.preview_editing]: renderModePreviewEditing,
     [StatusEnum.waiting_for_response]: renderModeResponse,
-    [StatusEnum.waiting_for_correct]: renderModeResponse,
-    [StatusEnum.finished]: renderModeResponse
+    [StatusEnum.waiting_for_correct]: renderModeCorrect,
+    [StatusEnum.finished]: renderModeFinished
   } as const
   return <>{renderOptions[context.status as keyof typeof renderOptions]?.()}</>
 }

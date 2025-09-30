@@ -3,7 +3,6 @@ import styled from 'styled-components'
 import { MultipleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils'
-import { isEditable } from '../isEditable'
 
 const StyledEditingOption = styled.div`
   display: flex;
@@ -38,6 +37,21 @@ const StyledOption = styled.div`
 
   > *:not(:last-child) {
     margin-right: var(--gap-normal);
+  }
+
+  span {
+    &.answer {
+      font-weight: 800;
+      color: var(--color-black);
+    }
+    &.passed {
+      font-weight: 400;
+      color: var(--color-success);
+    }
+    &.failed {
+      font-weight: 400;
+      color: var(--color-danger);
+    }
   }
 `
 
@@ -90,9 +104,7 @@ export const MultipleComponent = (props: MultipleProps) => {
         }
         if (
           context.status === StatusEnum.waiting_for_response ||
-          context.status === StatusEnum.waiting_for_correct ||
-          (context.status === StatusEnum.finished &&
-            context.config?.isAllowReCorrect)
+          context.status === StatusEnum.waiting_for_correct
         ) {
           if (value && !(response as string[])?.includes(optionKey)) {
             response = [...(response as string[]), optionKey]
@@ -105,10 +117,10 @@ export const MultipleComponent = (props: MultipleProps) => {
            */
           if (context.mode === ModeEnum.test) {
             // 檢查response是否完全符合answer，符合則加該題分數，不符合則得0分
-            const isCorrect = (response as string[]).every((key) =>
+            const isPass = (response as string[]).every((key) =>
               (answer as string[]).includes(key)
             )
-            finalScore = isCorrect ? props.score : 0
+            finalScore = isPass ? props.score : 0
           } else if (context.mode === ModeEnum.questionnaire) {
             // 抓所有已勾選的option，將其optionScore累加到該題得分裡
             const correctOptions = options.filter((option) =>
@@ -155,7 +167,7 @@ export const MultipleComponent = (props: MultipleProps) => {
     props.updateSection({ ...props, options: newOptions })
   }, [props])
 
-  const renderOptionsEditing = useCallback(() => {
+  const renderOptionsEditing = () => {
     return props.options.map((option, index) => {
       return (
         <StyledEditingOption key={option.key}>
@@ -215,14 +227,24 @@ export const MultipleComponent = (props: MultipleProps) => {
         </StyledEditingOption>
       )
     })
-  }, [props])
-  const renderOptionsResponse = useCallback(() => {
-    const isDisabled = !isEditable(context, props)
+  }
+  const renderOptionsPreviewEditing = () => {
+    return props.options.map((option, index) => {
+      return (
+        <StyledOption key={option.key}>
+          <Checkbox disabled={true}>
+            {getOptionLabel(index)} {option.label}
+          </Checkbox>
+        </StyledOption>
+      )
+    })
+  }
+  const renderOptionsResponse = () => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <Checkbox
-            disabled={isDisabled}
+            disabled={props.role !== context.role}
             checked={(props.response as string[])?.includes(option.key)}
             onChange={() =>
               editOptions(
@@ -237,14 +259,73 @@ export const MultipleComponent = (props: MultipleProps) => {
         </StyledOption>
       )
     })
-  }, [props, context])
+  }
+  const renderOptionsCorrect = () => {
+    return props.options.map((option, index) => {
+      let statusClass = ''
+      if (props.isPass) {
+        if ((props.response as string[])?.includes(option.key)) {
+          statusClass = 'passed'
+        }
+      } else {
+        if ((props.response as string[])?.includes(option.key)) {
+          statusClass = 'failed'
+        } else if ((props.answer as string[])?.includes(option.key)) {
+          statusClass = 'answer'
+        }
+      }
+      return (
+        <StyledOption className={statusClass} key={option.key}>
+          <Checkbox
+            disabled={props.role !== context.role}
+            checked={(props.response as string[])?.includes(option.key)}
+            onChange={() =>
+              editOptions(
+                option.key,
+                'isChecked',
+                !(props.response as string[])?.includes(option.key)
+              )
+            }
+          >
+            {getOptionLabel(index)} {option.label}
+          </Checkbox>
+        </StyledOption>
+      )
+    })
+  }
+  const renderOptionsFinished = () => {
+    return props.options.map((option, index) => {
+      let statusClass = ''
+      if (props.isPass) {
+        if ((props.response as string[])?.includes(option.key)) {
+          statusClass = 'passed'
+        }
+      } else {
+        if ((props.response as string[])?.includes(option.key)) {
+          statusClass = 'failed'
+        } else if ((props.answer as string[])?.includes(option.key)) {
+          statusClass = 'answer'
+        }
+      }
+      return (
+        <StyledOption className={statusClass} key={option.key}>
+          <Checkbox
+            disabled={true}
+            checked={(props.response as string[])?.includes(option.key)}
+          >
+            {getOptionLabel(index)} {option.label}
+          </Checkbox>
+        </StyledOption>
+      )
+    })
+  }
 
   const renderOptions = {
     [StatusEnum.editing]: renderOptionsEditing,
-    [StatusEnum.preview_editing]: renderOptionsResponse,
+    [StatusEnum.preview_editing]: renderOptionsPreviewEditing,
     [StatusEnum.waiting_for_response]: renderOptionsResponse,
-    [StatusEnum.waiting_for_correct]: renderOptionsResponse,
-    [StatusEnum.finished]: renderOptionsResponse
+    [StatusEnum.waiting_for_correct]: renderOptionsCorrect,
+    [StatusEnum.finished]: renderOptionsFinished
   } as const
   return (
     <>

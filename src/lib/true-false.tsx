@@ -2,7 +2,6 @@ import { useContext, useCallback } from 'react'
 import { TrueFalseProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import styled from 'styled-components'
-import { isEditable } from '../isEditable'
 
 const StyledEditingOption = styled.div`
   display: flex;
@@ -26,12 +25,23 @@ const StyledOption = styled.div`
     margin-bottom: var(--gap-small);
   }
 
-  &.passed {
-    color: var(--color-success);
-  }
-
   > *:not(:last-child) {
     margin-right: var(--gap-normal);
+  }
+
+  span {
+    &.answer {
+      font-weight: 800;
+      color: var(--color-black);
+    }
+    &.passed {
+      font-weight: 400;
+      color: var(--color-success);
+    }
+    &.failed {
+      font-weight: 400;
+      color: var(--color-danger);
+    }
   }
 `
 
@@ -73,23 +83,35 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
       key: 'label' | 'isChecked',
       value?: string | boolean | number
     ) => {
-      let { answer, response, options, finalScore } = props
+      let { answer, response, options, finalScore, isPass } = props
       if (key === 'isChecked') {
         if (context.status === StatusEnum.editing) {
           answer = optionKey
         }
+
         if (
           context.status === StatusEnum.waiting_for_response ||
-          context.status === StatusEnum.waiting_for_correct ||
-          (context.status === StatusEnum.finished &&
-            context.config?.isAllowReCorrect)
+          context.status === StatusEnum.waiting_for_correct
         ) {
           response = optionKey
           if (context.mode === ModeEnum.test) {
-            finalScore = response === answer ? props.score : 0
+            if (response === answer) {
+              finalScore = props.score
+              isPass = true
+            } else {
+              finalScore = 0
+              isPass = false
+            }
           }
         }
-        props.updateSection({ ...props, answer, response, finalScore })
+
+        props.updateSection({
+          ...props,
+          answer,
+          response,
+          finalScore,
+          isPass
+        })
       }
 
       if (key === 'label') {
@@ -106,7 +128,8 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
     },
     [props, context]
   )
-  const renderOptionsEditing = useCallback(() => {
+
+  const renderOptionsEditing = () => {
     return props.options.map((option, index) => {
       return (
         <StyledEditingOption key={option.key}>
@@ -130,14 +153,24 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
         </StyledEditingOption>
       )
     })
-  }, [props])
-  const renderOptionsResponse = useCallback(() => {
-    const isDisabled = !isEditable(context, props)
+  }
+  const renderOptionsPreviewEditing = () => {
+    return props.options.map((option, index) => {
+      return (
+        <StyledOption key={option.key}>
+          <Radio disabled={true} checked={option.key === props.response}>
+            {answerOptions[index]} {option.label}
+          </Radio>
+        </StyledOption>
+      )
+    })
+  }
+  const renderOptionsResponse = () => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <Radio
-            disabled={isDisabled}
+            disabled={props.role !== context.role}
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >
@@ -146,30 +179,67 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
         </StyledOption>
       )
     })
-  }, [props, context])
-  const renderOptionsFinished = useCallback(() => {
+  }
+  const renderOptionsCorrect = () => {
     return props.options.map((option, index) => {
-      const isPassed =
-        props.answer === props.response && props.response === option.key
+      let statusClass = ''
+      if (props.isPass) {
+        if (props.response === option.key) {
+          statusClass = 'passed'
+        }
+      } else if (props.isPass === false) {
+        if (props.response === option.key) {
+          statusClass = 'failed'
+        } else if (props.answer === option.key) {
+          statusClass = 'answer'
+        }
+      }
       return (
-        <StyledOption className={isPassed ? 'passed' : ''} key={option.key}>
+        <StyledOption key={option.key}>
           <Radio
-            disabled={true}
+            disabled={props.role !== context.role}
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
-          />
-          <div>{answerOptions[index]}</div>
-          <div>{option.label}</div>
+          >
+            <span className={statusClass}>
+              {answerOptions[index]} {option.label}
+            </span>
+          </Radio>
         </StyledOption>
       )
     })
-  }, [props])
+  }
+  const renderOptionsFinished = () => {
+    return props.options.map((option, index) => {
+      let statusClass = ''
+      if (props.isPass) {
+        if (props.response === option.key) {
+          statusClass = 'passed'
+        }
+      } else if (props.isPass === false) {
+        if (props.response === option.key) {
+          statusClass = 'failed'
+        } else if (props.answer === option.key) {
+          statusClass = 'answer'
+        }
+      }
+      return (
+        <StyledOption key={option.key}>
+          <Radio disabled={true} checked={option.key === props.response}>
+            <span className={statusClass}>
+              {answerOptions[index]} {option.label}
+            </span>
+          </Radio>
+        </StyledOption>
+      )
+    })
+  }
 
   const renderOptions = {
     [StatusEnum.editing]: renderOptionsEditing,
-    [StatusEnum.preview_editing]: renderOptionsResponse,
+    [StatusEnum.preview_editing]: renderOptionsPreviewEditing,
     [StatusEnum.waiting_for_response]: renderOptionsResponse,
-    [StatusEnum.waiting_for_correct]: renderOptionsResponse,
+    [StatusEnum.waiting_for_correct]: renderOptionsCorrect,
     [StatusEnum.finished]: renderOptionsFinished
   } as const
   return (

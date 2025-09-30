@@ -98,16 +98,28 @@ const SectionContent: React.FC<SectionContentProps> = ({
         {/* <div className='section-title-drag' {...dragHandleProps}>
           <IconDrag />
         </div> */}
+        {context.mode === ModeEnum.test &&
+          (context.status === StatusEnum.waiting_for_correct ||
+            context.status === StatusEnum.finished) &&
+          section.isPass !== null && (
+            <span>
+              <em
+                className={`section-title-status ${
+                  section.isPass ? 'passed' : 'failed'
+                }`}
+              >
+                {section.isPass ? '答對' : '答錯'}
+              </em>
+            </span>
+          )}
         <span>題目 {index + 1}</span>
-        <span style={{ color: 'var(--color-disabled-icon)' }}>
-          [ {section.type} ]
-        </span>
-        {context.status === StatusEnum.editing &&
-          context.mode === ModeEnum.test && (
+        <span>{section.type}</span>
+        {context.mode === ModeEnum.test &&
+          context.status === StatusEnum.editing && (
             <>
-              <span style={{ marginRight: '0.5rem' }}>得分</span>
+              得分 :
               <InputNumber
-                style={{ width: '100px', marginRight: '1rem' }}
+                style={{ width: '100px', marginLeft: '1rem' }}
                 value={section.score}
                 precision={0}
                 min={0}
@@ -116,6 +128,11 @@ const SectionContent: React.FC<SectionContentProps> = ({
                 }
               />
             </>
+          )}
+        {context.mode === ModeEnum.test &&
+          (context.status === StatusEnum.waiting_for_correct ||
+            context.status === StatusEnum.finished) && (
+            <span>得分 :{section.score !== null ? section.score : ''}</span>
           )}
         {context.status === StatusEnum.editing && (
           <BtnGroup className='clearfix' style={{ float: 'right' }}>

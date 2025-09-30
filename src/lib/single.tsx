@@ -3,7 +3,6 @@ import { SingleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils'
 import styled from 'styled-components'
-import { isEditable } from '../isEditable'
 
 const StyledEditingOption = styled.div`
   display: flex;
@@ -37,6 +36,21 @@ const StyledOption = styled.div`
 
   > *:not(:last-child) {
     margin-right: var(--gap-normal);
+  }
+
+  span {
+    &.answer {
+      font-weight: 800;
+      color: var(--color-black);
+    }
+    &.passed {
+      font-weight: 400;
+      color: var(--color-success);
+    }
+    &.failed {
+      font-weight: 400;
+      color: var(--color-danger);
+    }
   }
 `
 
@@ -133,7 +147,7 @@ export const SingleComponent = (props: SingleProps) => {
     props.updateSection({ ...props, options: newOptions })
   }, [props])
 
-  const renderOptionsEditing = useCallback(() => {
+  const renderOptionsEditing = () => {
     return props.options.map((option, index) => {
       return (
         <StyledEditingOption key={option.key}>
@@ -185,14 +199,24 @@ export const SingleComponent = (props: SingleProps) => {
         </StyledEditingOption>
       )
     })
-  }, [props])
-  const renderOptionsResponse = useCallback(() => {
-    const isDisabled = !isEditable(context, props)
+  }
+  const renderOptionsPreviewEditing = () => {
+    return props.options.map((option, index) => {
+      return (
+        <StyledOption key={option.key}>
+          <Radio disabled={true} checked={option.key === props.response}>
+            {getOptionLabel(index)} {option.label}
+          </Radio>
+        </StyledOption>
+      )
+    })
+  }
+  const renderOptionsResponse = () => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <Radio
-            disabled={isDisabled}
+            disabled={props.role !== context.role}
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >
@@ -201,14 +225,64 @@ export const SingleComponent = (props: SingleProps) => {
         </StyledOption>
       )
     })
-  }, [props, context])
+  }
+  const renderOptionsCorrect = () => {
+    return props.options.map((option, index) => {
+      let statusClass = ''
+      if (props.isPass) {
+        if (props.response === option.key) {
+          statusClass = 'passed'
+        }
+      } else if (props.isPass === false) {
+        if (props.response === option.key) {
+          statusClass = 'failed'
+        } else if (props.answer === option.key) {
+          statusClass = 'answer'
+        }
+      }
+      return (
+        <StyledOption className={statusClass} key={option.key}>
+          <Radio
+            disabled={props.role !== context.role}
+            checked={option.key === props.response}
+            onChange={() => editOptions(option.key, 'isChecked')}
+          >
+            {getOptionLabel(index)} {option.label}
+          </Radio>
+        </StyledOption>
+      )
+    })
+  }
+  const renderOptionsFinished = () => {
+    return props.options.map((option, index) => {
+      let statusClass = ''
+      if (props.isPass) {
+        if (props.response === option.key) {
+          statusClass = 'passed'
+        }
+      } else if (props.isPass === false) {
+        if (props.response === option.key) {
+          statusClass = 'failed'
+        } else if (props.answer === option.key) {
+          statusClass = 'answer'
+        }
+      }
+      return (
+        <StyledOption className={statusClass} key={option.key}>
+          <Radio disabled={true} checked={option.key === props.response}>
+            {getOptionLabel(index)} {option.label}
+          </Radio>
+        </StyledOption>
+      )
+    })
+  }
 
   const renderOptions = {
     [StatusEnum.editing]: renderOptionsEditing,
-    [StatusEnum.preview_editing]: renderOptionsResponse,
+    [StatusEnum.preview_editing]: renderOptionsPreviewEditing,
     [StatusEnum.waiting_for_response]: renderOptionsResponse,
-    [StatusEnum.waiting_for_correct]: renderOptionsResponse,
-    [StatusEnum.finished]: renderOptionsResponse
+    [StatusEnum.waiting_for_correct]: renderOptionsCorrect,
+    [StatusEnum.finished]: renderOptionsFinished
   } as const
   return (
     <>

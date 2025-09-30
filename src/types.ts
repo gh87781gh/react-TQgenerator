@@ -46,6 +46,7 @@ interface BaseSectionProps {
   response: string | number | null | string[] | dayjs.Dayjs // 回答
   score: number // 題目設定的分數，測驗才用得到
   finalScore: number //得分
+  isPass: boolean | null // 是否通過
 }
 export const initBaseSection: BaseSectionProps = {
   id: null,
@@ -57,6 +58,7 @@ export const initBaseSection: BaseSectionProps = {
   response: null,
   score: 0,
   finalScore: 0,
+  isPass: null
 }
 
 export interface TrueFalseProps extends BaseSectionProps {
@@ -133,6 +135,7 @@ export type TQgeneratorProps = {
     isAllowSelectReviewer?: boolean | null
     isAllowReSelectReviewer?: boolean | null
     isAllowReCorrect?: boolean | null
+    isReCorrecting?: boolean
     isPreviewEditing?: boolean | null
     isAllowReviewScore?: boolean | null
     isAllowReviewWithAnswer?: boolean | null
@@ -141,7 +144,6 @@ export type TQgeneratorProps = {
     isShowCurrentFinalTotalScore?: boolean | null
     isShowCorrectActionPass?: boolean | null
     isShowCorrectActionSubmit?: boolean | null
-    isAllowUpdateAfterFinished?: boolean | null
   }
   assets?: {
     ReviewResultMap?: {
@@ -168,10 +170,12 @@ export type TQgeneratorProps = {
   setSections?: (sections: SectionProps<TypeKeysEnum>[]) => void
   actorID: string | null //填寫者
   reviewerID: string | null //評核者
+  totalScore?: number | null // 預計總分
+
   result: {
-    score: number | null
-    reviewResult?: number | null
-    targetUserID?: string | null
+    score: number | null // 得分
+    reviewResult?: number | null // 評核為通過或不通過
+    targetUserID?: string | null // TODO 待討論
     // specifyUserID?: string | null
   }
 
@@ -202,7 +206,9 @@ export type TQgeneratorProps = {
   utility: {
     icons: {
       IconDrag: React.ComponentType<any>
-      IconDeleteOutline: React.ComponentType<any>
+      IconDeleteOutline: React.ComponentType<any>,
+      IconPassedCircle: React.ComponentType<any>,
+      IconFailedCircle: React.ComponentType<any>
     },
     formatDate: (date: any) => string
   }

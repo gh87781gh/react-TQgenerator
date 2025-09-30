@@ -1,7 +1,6 @@
 import { useCallback, useContext } from 'react'
 import { EssayProps, TypeKeysEnum, StatusEnum, ModeEnum } from '../types'
 import { MyContext } from '../TQgenerator'
-import { isEditable } from '../isEditable'
 
 export const initEssay: Pick<EssayProps, 'type' | 'answer' | 'response'> = {
   type: TypeKeysEnum.問答題,
@@ -11,50 +10,132 @@ export const initEssay: Pick<EssayProps, 'type' | 'answer' | 'response'> = {
 
 export const EssayComponent = (props: EssayProps) => {
   const context = useContext(MyContext)
-  const { components } = context
-  const { formItems } = components
+  const { components, utility } = context
+  const { icons } = utility
+  const { formItems, btnItems } = components
   const { Label, Textarea } = formItems
+  const { BtnGroup, BtnPrimary } = btnItems
+  const { IconFailedCircle, IconPassedCircle } = icons
 
   const editSection = useCallback(
-    (key: string, value: string | number) => {
-      props.updateSection({ ...props, [key]: value })
+    (key: string, value: string | number | boolean) => {
+      let { finalScore } = props
+
+      if (key === 'isPass') {
+        if (value === true) {
+          finalScore = props.score
+        } else {
+          finalScore = 0
+        }
+      }
+
+      props.updateSection({ ...props, finalScore, [key]: value })
     },
     [props]
   )
-  const renderModeEditing = useCallback(() => {
-    return (
-      props.mode === ModeEnum.test && (
-        <>
-          <Label>解析</Label>
-          <Textarea
-            value={props.answer}
-            onChange={(e: any) => editSection('answer', e.target.value)}
-          />
-        </>
-      )
-    )
-  }, [props])
 
-  const renderModeResponse = useCallback(() => {
-    const isDisabled = !isEditable(context, props)
+  const renderModeEditing = () => {
+    return props.mode === ModeEnum.test ? (
+      <>
+        <Label>解析</Label>
+        <Textarea
+          value={props.answer}
+          onChange={(e: any) => editSection('answer', e.target.value)}
+        />
+      </>
+    ) : null
+  }
+  const renderModePreviewEditing = () => {
+    return props.mode === ModeEnum.test ? (
+      <>
+        <Label>解析</Label>
+        <Textarea
+          disabled={true}
+          value={props.answer}
+          onChange={(e: any) => editSection('answer', e.target.value)}
+        />
+      </>
+    ) : null
+  }
+  const renderModeResponse = () => {
     return (
       <>
         <Label>答案</Label>
         <Textarea
-          disabled={isDisabled}
+          disabled={props.role !== context.role}
           value={props.response}
           onChange={(e: any) => editSection('response', e.target.value)}
         />
       </>
     )
-  }, [props, context])
+  }
+  const renderModeCorrect = () => {
+    return (
+      <>
+        <Label>答案</Label>
+        <Textarea
+          disabled={props.role !== context.role}
+          value={props.response}
+          onChange={(e: any) => editSection('response', e.target.value)}
+        />
+        {props.mode === ModeEnum.test && props.role === context.role && (
+          <>
+            <div style={{ textAlign: 'right' }}>
+              <BtnGroup>
+                <BtnPrimary
+                  theme='danger'
+                  onClick={() => editSection('isPass', false)}
+                >
+                  <IconFailedCircle /> 答錯
+                </BtnPrimary>
+                <BtnPrimary
+                  theme='success'
+                  onClick={() => editSection('isPass', true)}
+                >
+                  <IconPassedCircle /> 正確
+                </BtnPrimary>
+              </BtnGroup>
+            </div>
+            <Label>解析</Label>
+            <Textarea
+              value={props.answer}
+              onChange={(e: any) => editSection('answer', e.target.value)}
+            />
+          </>
+        )}
+      </>
+    )
+  }
+  const renderModeFinished = () => {
+    return (
+      <>
+        <Label>答案</Label>
+        <Textarea
+          disabled={true}
+          value={props.response}
+          onChange={(e: any) => editSection('response', e.target.value)}
+        />
+        {props.mode === ModeEnum.test &&
+          context.config?.isAllowReviewWithAnswer && (
+            <>
+              <Label>解析</Label>
+              <Textarea
+                disabled={true}
+                value={props.answer}
+                onChange={(e: any) => editSection('answer', e.target.value)}
+              />
+            </>
+          )}
+      </>
+    )
+  }
 
   const renderMode = {
     [StatusEnum.editing]: renderModeEditing,
-    [StatusEnum.preview_editing]: renderModeResponse,
+    [StatusEnum.preview_editing]: renderModePreviewEditing,
     [StatusEnum.waiting_for_response]: renderModeResponse,
-    [StatusEnum.waiting_for_correct]: renderModeResponse,
-    [StatusEnum.finished]: renderModeResponse
+    [StatusEnum.waiting_for_correct]: renderModeCorrect,
+    [StatusEnum.finished]: renderModeFinished
   } as const
   return <>{renderMode[context.status as keyof typeof renderMode]?.()}</>
 }

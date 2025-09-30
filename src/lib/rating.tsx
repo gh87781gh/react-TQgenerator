@@ -2,7 +2,6 @@ import { useCallback, useContext } from 'react'
 import styled from 'styled-components'
 import { RatingProps, TypeKeysEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
-import { isEditable } from '../isEditable'
 
 const StyledRatingType = styled.div`
   display: flex;
@@ -63,7 +62,7 @@ export const RatingComponent = (props: RatingProps) => {
   }
 
   const renderClickButton = useCallback(
-    (isInteractive: boolean = false) => {
+    (isDisabled: boolean) => {
       if (
         props.max === undefined ||
         props.min === undefined ||
@@ -78,11 +77,9 @@ export const RatingComponent = (props: RatingProps) => {
         return (
           <Radio
             key={index}
-            disabled={!isInteractive}
+            disabled={isDisabled}
             checked={props.rating === rating}
-            onChange={
-              isInteractive ? () => editSection('rating', rating) : undefined
-            }
+            onChange={() => editSection('rating', rating)}
           >
             {rating}
           </Radio>
@@ -153,14 +150,13 @@ export const RatingComponent = (props: RatingProps) => {
       </>
     )
   }, [props])
-  const renderModeResponse = useCallback(() => {
-    const isDisabled = !isEditable(context, props)
+  const renderModePreviewEditing = () => {
     return (
       <>
         <Label>評分</Label>
         {props.ratingType === 'number' ? (
           <InputNumber
-            disabled={isDisabled}
+            disabled={true}
             value={props.rating}
             min={props.min}
             max={props.max}
@@ -169,20 +165,58 @@ export const RatingComponent = (props: RatingProps) => {
             style={{ width: '150px' }}
           />
         ) : (
-          <StyledRatingType>
-            {renderClickButton(isDisabled ? false : true)}
-          </StyledRatingType>
+          <StyledRatingType>{renderClickButton(true)}</StyledRatingType>
         )}
       </>
     )
-  }, [props, context])
+  }
+  const renderModeResponse = () => {
+    return (
+      <>
+        <Label>評分</Label>
+        {props.ratingType === 'number' ? (
+          <InputNumber
+            disabled={props.role !== context.role}
+            value={props.rating}
+            min={props.min}
+            max={props.max}
+            precision={0}
+            onChange={(value: any) => editSection('rating', Number(value) || 0)}
+            style={{ width: '150px' }}
+          />
+        ) : (
+          <StyledRatingType>{renderClickButton(false)}</StyledRatingType>
+        )}
+      </>
+    )
+  }
+  const renderModeFinished = () => {
+    return (
+      <>
+        <Label>評分</Label>
+        {props.ratingType === 'number' ? (
+          <InputNumber
+            disabled={true}
+            value={props.rating}
+            min={props.min}
+            max={props.max}
+            precision={0}
+            onChange={(value: any) => editSection('rating', Number(value) || 0)}
+            style={{ width: '150px' }}
+          />
+        ) : (
+          <StyledRatingType>{renderClickButton(true)}</StyledRatingType>
+        )}
+      </>
+    )
+  }
 
   const renderMode = {
     [StatusEnum.editing]: renderModeEditing,
-    [StatusEnum.preview_editing]: renderModeResponse,
+    [StatusEnum.preview_editing]: renderModePreviewEditing,
     [StatusEnum.waiting_for_response]: renderModeResponse,
     [StatusEnum.waiting_for_correct]: renderModeResponse,
-    [StatusEnum.finished]: renderModeResponse
+    [StatusEnum.finished]: renderModeFinished
   } as const
   return <>{renderMode[context.status as keyof typeof renderMode]?.()}</>
 }
