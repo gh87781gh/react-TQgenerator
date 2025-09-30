@@ -45,12 +45,10 @@ const StyledOption = styled.div`
       color: var(--color-black);
     }
     &.passed {
-      font-weight: 400;
-      color: var(--color-success);
+      color: var(--color-success) !important;
     }
     &.failed {
-      font-weight: 400;
-      color: var(--color-danger);
+      color: var(--color-danger) !important;
     }
   }
 `
@@ -262,20 +260,25 @@ export const MultipleComponent = (props: MultipleProps) => {
   }
   const renderOptionsCorrect = () => {
     return props.options.map((option, index) => {
-      let statusClass = ''
+      let passedClass = ''
+      let answerClass = ''
       if (props.isPass) {
         if ((props.response as string[])?.includes(option.key)) {
-          statusClass = 'passed'
+          passedClass = 'passed'
         }
       } else {
         if ((props.response as string[])?.includes(option.key)) {
-          statusClass = 'failed'
-        } else if ((props.answer as string[])?.includes(option.key)) {
-          statusClass = 'answer'
+          passedClass = 'failed'
+        }
+        if ((props.answer as string[])?.includes(option.key)) {
+          answerClass = 'answer'
         }
       }
       return (
-        <StyledOption className={statusClass} key={option.key}>
+        <StyledOption
+          className={`${answerClass} ${passedClass}`}
+          key={option.key}
+        >
           <Checkbox
             disabled={props.role !== context.role}
             checked={(props.response as string[])?.includes(option.key)}
