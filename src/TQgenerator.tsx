@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import _ from 'lodash'
@@ -448,6 +448,22 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     [StatusEnum.waiting_for_correct]: renderActionCorrect,
     [StatusEnum.finished]: () => null
   }
+
+  useEffect(() => {
+    if (actions?.isAutoSubmitResponse) {
+      if (config?.isAllowSelectReviewer) {
+        setIsShowSelectReviewer(true)
+      } else {
+        if (mode === ModeEnum.test) {
+          const score = autoCorrectTest(props.sections)
+          actions?.onSubmitResponse?.(score, null)
+        } else if (mode === ModeEnum.questionnaire) {
+          const score = autoCorrectQuestionnaire(props.sections)
+          actions?.onSubmitResponse?.(score, null)
+        }
+      }
+    }
+  }, [actions?.isAutoSubmitResponse])
 
   const getOptions = () => {
     return mode === ModeEnum.test

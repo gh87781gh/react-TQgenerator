@@ -161,6 +161,7 @@ export type TQgeneratorProps = {
     onPreviewEditing?: () => void
     onSubmitResponse?: (totalScore: number, reviewerID: string | null) => void
     onSubmitCorrect?: (totalScore: number, reviewResult: number | null) => void
+    isAutoSubmitResponse?: boolean
   }
 
   mode: ModeEnum | null
