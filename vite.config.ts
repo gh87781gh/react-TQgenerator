@@ -10,9 +10,9 @@ export default defineConfig({
       insertTypesEntry: true,
       include: ['src/**/*'],
       exclude: ['src/**/*.test.*', 'src/**/*.spec.*'],
-      outDir: 'dist',
+      outDirs: 'dist',
       copyDtsFiles: false,
-      rollupTypes: true,
+        bundleTypes: true
     }),
   ],
   build: {
