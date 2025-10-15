@@ -92,9 +92,11 @@ const SectionContent: React.FC<SectionContentProps> = ({
       tabIndex={0}
     >
       <div className='section-title'>
-        <div className='section-title-drag' {...dragHandleProps}>
-          <IconDrag />
-        </div>
+        {context.status === StatusEnum.editing && (
+          <div className='section-title-drag' {...dragHandleProps}>
+            <IconDrag />
+          </div>
+        )}
         {context.mode === ModeEnum.test &&
           (context.status === StatusEnum.waiting_for_correct ||
             context.status === StatusEnum.finished) &&
