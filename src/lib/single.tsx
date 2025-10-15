@@ -81,7 +81,7 @@ export const SingleComponent = (props: SingleProps) => {
   const { components, utility } = context
   const { icons } = utility
   const { formItems, btnItems } = components
-  const { Input, Label, Radio, InputNumber } = formItems
+  const { Label, Radio, InputNumber, Textarea } = formItems
   const { BtnOutline, BtnText } = btnItems
 
   const editOptions = useCallback(
@@ -152,11 +152,11 @@ export const SingleComponent = (props: SingleProps) => {
       return (
         <StyledEditingOption key={option.key}>
           <div>{getOptionLabel(index)}</div>
-          <Input
+          <Textarea
             value={option.label}
             onChange={(e: any) =>
-              editOptions(option.key, 'label', e.target.value)
-            }
+              editOptions(option.key, 'label', e.target.value)}
+            autoSize={{ minRows: 1, maxRows: 4 }}
           />
           <div className='option-result'>
             {props.mode === ModeEnum.test && (

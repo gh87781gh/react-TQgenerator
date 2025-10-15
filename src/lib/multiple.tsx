@@ -82,7 +82,7 @@ export const MultipleComponent = (props: MultipleProps) => {
   const { icons } = utility
   const { IconDeleteOutline } = icons
   const { formItems, btnItems } = components
-  const { Input, Label, InputNumber, Checkbox } = formItems
+  const { Label, InputNumber, Checkbox, Textarea } = formItems
   const { BtnOutline, BtnText } = btnItems
 
   const editOptions = useCallback(
@@ -170,11 +170,12 @@ export const MultipleComponent = (props: MultipleProps) => {
       return (
         <StyledEditingOption key={option.key}>
           <div>{getOptionLabel(index)}</div>
-          <Input
+          <Textarea
             value={option.label}
             onChange={(e: any) =>
               editOptions(option.key, 'label', e.target.value)
             }
+            autoSize={{ minRows: 1, maxRows: 4 }}
           />
           <div className='option-result'>
             {props.mode === ModeEnum.test && (

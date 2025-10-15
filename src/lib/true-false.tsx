@@ -75,7 +75,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
   const context = useContext(MyContext)
   const { components } = context
   const { formItems } = components
-  const { Input, Label, Radio } = formItems
+  const { Label, Radio, Textarea } = formItems
 
   const editOptions = useCallback(
     (
@@ -134,11 +134,12 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
       return (
         <StyledEditingOption key={option.key}>
           <div>{answerOptions[index]}</div>
-          <Input
+          <Textarea
             value={option.label}
             onChange={(e: any) =>
               editOptions(option.key, 'label', e.target.value)
             }
+            autoSize={{ minRows: 1, maxRows: 4 }}
           />
           {props.mode === ModeEnum.test && (
             <div style={{ width: '200px' }}>
