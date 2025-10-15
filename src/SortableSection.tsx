@@ -121,8 +121,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
               <InputNumber
                 style={{ width: '100px', marginLeft: '1rem' }}
                 value={section.score}
-                precision={0}
+                precision={1}
                 min={0}
+                step={0.1}
                 onChange={(value: any) =>
                   editSection(section.id || '', { score: Number(value) || 0 })
                 }
