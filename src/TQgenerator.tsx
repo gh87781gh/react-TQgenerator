@@ -3,18 +3,18 @@ import styled from 'styled-components'
 import './variables.css'
 import _ from 'lodash'
 import packageJson from '../package.json'
-// import {
-//   DndContext,
-//   MouseSensor,
-//   useSensor,
-//   PointerSensor
-// } from '@dnd-kit/core'
-// import type { DragEndEvent } from '@dnd-kit/core'
-// import {
-//   arrayMove,
-//   verticalListSortingStrategy,
-//   SortableContext
-// } from '@dnd-kit/sortable'
+import {
+  DndContext,
+  MouseSensor,
+  useSensor,
+  PointerSensor
+} from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import {
+  arrayMove,
+  verticalListSortingStrategy,
+  SortableContext
+} from '@dnd-kit/sortable'
 
 import {
   initBaseSection,
@@ -31,7 +31,7 @@ import { initField } from './lib/field'
 import { initEssay } from './lib/essay'
 import { initRating } from './lib/rating'
 
-// import { SortableItem } from './SortableSection'
+import { SortableItem } from './SortableSection'
 import { SectionContent } from './SortableSection'
 import { autoCorrectQuestionnaire, autoCorrectTest } from './autoCorrect'
 // import { autoCorrectTest } from './autoCorrect'
@@ -284,31 +284,31 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }
 
   // NOTE DND
-  // const mouseSensor = useSensor(MouseSensor, {
-  //   activationConstraint: {
-  //     distance: 10
-  //   }
-  // })
-  // const pointerSensor = useSensor(PointerSensor, {
-  //   activationConstraint: {
-  //     distance: 10
-  //   }
-  // })
-  // const handleDragEnd = (event: DragEndEvent) => {
-  //   const { active, over } = event
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 10
+    }
+  })
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 10
+    }
+  })
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
 
-  //   if (over && active.id !== over.id) {
-  //     const oldIndex = props.sections.findIndex(
-  //       (section) => section.id === active.id
-  //     )
-  //     const newIndex = props.sections.findIndex(
-  //       (section) => section.id === over.id
-  //     )
+    if (over && active.id !== over.id) {
+      const oldIndex = props.sections.findIndex(
+        (section) => section.id === active.id
+      )
+      const newIndex = props.sections.findIndex(
+        (section) => section.id === over.id
+      )
 
-  //     const newSections = arrayMove(props.sections, oldIndex, newIndex)
-  //     setSections?.(newSections)
-  //   }
-  // }
+      const newSections = arrayMove(props.sections, oldIndex, newIndex)
+      setSections?.(newSections)
+    }
+  }
 
   const renderActionSubmitEditing = useCallback(() => {
     return (
@@ -516,7 +516,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       <StyledTQgenerator>
         {renderActionSubmitEditing?.()}
 
-        {isShowSections &&
+        {/* {isShowSections &&
           props.sections
             .filter((section) => section.id !== null)
             .map((section, index) => {
@@ -529,35 +529,36 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                   deleteSection={deleteSection}
                 />
               )
-            })}
+            })} */}
 
-        {/* <DndContext
-          sensors={[mouseSensor, pointerSensor]}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={props.sections
-              .map((section) => section.id)
-              .filter((id): id is string => id !== null)}
-            strategy={verticalListSortingStrategy}
+        {isShowSections && (
+          <DndContext
+            sensors={[mouseSensor, pointerSensor]}
+            onDragEnd={handleDragEnd}
           >
-            {props.sections
-              .filter((section) => section.id !== null)
-              .map((section, index) => {
-                return (
-                  <SortableItem key={section.id} id={section.id!}>
-                    <SectionContent
-                      section={section}
-                      index={index}
-                      editSection={editSection}
-                      deleteSection={deleteSection}
-                    />
-                  </SortableItem>
-                )
-              })}
-          </SortableContext>
-        </DndContext> */}
-
+            <SortableContext
+              items={props.sections
+                .map((section) => section.id)
+                .filter((id): id is string => id !== null)}
+              strategy={verticalListSortingStrategy}
+            >
+              {props.sections
+                .filter((section) => section.id !== null)
+                .map((section, index) => {
+                  return (
+                    <SortableItem key={section.id} id={section.id!}>
+                      <SectionContent
+                        section={section}
+                        index={index}
+                        editSection={editSection}
+                        deleteSection={deleteSection}
+                      />
+                    </SortableItem>
+                  )
+                })}
+            </SortableContext>
+          </DndContext>
+        )}
         <div
           style={{
             width: '100%',

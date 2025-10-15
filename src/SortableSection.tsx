@@ -69,16 +69,13 @@ const SectionContent: React.FC<SectionContentProps> = ({
   section,
   index,
   editSection,
-  deleteSection
-  // dragHandleProps
+  deleteSection,
+  dragHandleProps
 }) => {
   const context = useContext(MyContext)
   const { utility, components } = context
   const { icons } = utility
-  const {
-    //  IconDrag,
-    IconDeleteOutline
-  } = icons
+  const { IconDrag, IconDeleteOutline } = icons
   const {
     formItems,
     btnItems
@@ -95,9 +92,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
       tabIndex={0}
     >
       <div className='section-title'>
-        {/* <div className='section-title-drag' {...dragHandleProps}>
+        <div className='section-title-drag' {...dragHandleProps}>
           <IconDrag />
-        </div> */}
+        </div>
         {context.mode === ModeEnum.test &&
           (context.status === StatusEnum.waiting_for_correct ||
             context.status === StatusEnum.finished) &&
