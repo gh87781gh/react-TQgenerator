@@ -171,6 +171,7 @@ export const RatingComponent = (props: RatingProps) => {
     )
   }
   const renderModeResponse = () => {
+    console.log('🔴', props.role, context.role)
     return (
       <>
         <Label>評分</Label>
@@ -185,7 +186,9 @@ export const RatingComponent = (props: RatingProps) => {
             style={{ width: '150px' }}
           />
         ) : (
-          <StyledRatingType>{renderClickButton(false)}</StyledRatingType>
+          <StyledRatingType>
+            {renderClickButton(props.role !== context.role)}
+          </StyledRatingType>
         )}
       </>
     )

@@ -73,6 +73,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
   dragHandleProps
 }) => {
   const context = useContext(MyContext)
+
+  console.log('context', context)
+
   const { utility, components } = context
   const { icons } = utility
   const { IconDrag, IconDeleteOutline } = icons
