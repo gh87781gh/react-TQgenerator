@@ -171,7 +171,6 @@ export const RatingComponent = (props: RatingProps) => {
     )
   }
   const renderModeResponse = () => {
-    console.log('🔴', props.role, context.role)
     return (
       <>
         <Label>評分</Label>
