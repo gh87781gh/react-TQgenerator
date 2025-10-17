@@ -15,6 +15,7 @@ import {
   verticalListSortingStrategy,
   SortableContext
 } from '@dnd-kit/sortable'
+import { v4 as uuid } from 'uuid'
 
 import {
   initBaseSection,
@@ -217,7 +218,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       : TypeKeysEnum.是非題 // TODO 應該要是null
   )
   const addSection = (type: TypeKeysEnum) => {
-    const id = String(props.sections.length + 1)
+    const id = uuid() as string
 
     let newItem = _.cloneDeep(initBaseSection)
     newItem.mode = mode as ModeEnum
