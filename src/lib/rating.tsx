@@ -185,7 +185,9 @@ export const RatingComponent = (props: RatingProps) => {
             style={{ width: '150px' }}
           />
         ) : (
-          <StyledRatingType>{renderClickButton(false)}</StyledRatingType>
+          <StyledRatingType>
+            {renderClickButton(props.role !== context.role)}
+          </StyledRatingType>
         )}
       </>
     )
