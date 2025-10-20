@@ -12,6 +12,7 @@ export enum StatusEnum {
   finished = 'finished',
 }
 export enum RoleEnum {
+  manager = 'manager',
   actor = 'actor',
   reviewer = 'reviewer'
 }

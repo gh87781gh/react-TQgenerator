@@ -69,16 +69,13 @@ const SectionContent: React.FC<SectionContentProps> = ({
   section,
   index,
   editSection,
-  deleteSection
-  // dragHandleProps
+  deleteSection,
+  dragHandleProps
 }) => {
   const context = useContext(MyContext)
   const { utility, components } = context
   const { icons } = utility
-  const {
-    //  IconDrag,
-    IconDeleteOutline
-  } = icons
+  const { IconDrag, IconDeleteOutline } = icons
   const {
     formItems,
     btnItems
@@ -95,9 +92,11 @@ const SectionContent: React.FC<SectionContentProps> = ({
       tabIndex={0}
     >
       <div className='section-title'>
-        {/* <div className='section-title-drag' {...dragHandleProps}>
-          <IconDrag />
-        </div> */}
+        {context.status === StatusEnum.editing && (
+          <div className='section-title-drag' {...dragHandleProps}>
+            <IconDrag />
+          </div>
+        )}
         {context.mode === ModeEnum.test &&
           (context.status === StatusEnum.waiting_for_correct ||
             context.status === StatusEnum.finished) &&
@@ -135,35 +134,36 @@ const SectionContent: React.FC<SectionContentProps> = ({
             context.status === StatusEnum.finished) && (
             <span>得分 :{section.score !== null ? section.score : ''}</span>
           )}
-        {context.status === StatusEnum.editing && (
-          <BtnGroup className='clearfix' style={{ float: 'right' }}>
-            <Radio
-              key='actor'
-              checked={section.role === RoleEnum.actor}
-              onChange={() =>
-                editSection(section.id || '', { role: RoleEnum.actor })
-              }
-            >
-              填寫者
-            </Radio>
-            <Radio
-              key='reviewer'
-              checked={section.role === RoleEnum.reviewer}
-              onChange={() =>
-                editSection(section.id || '', { role: RoleEnum.reviewer })
-              }
-            >
-              評核者
-            </Radio>
-            <BtnText
-              key='delete'
-              theme='danger'
-              onClick={() => deleteSection(section.id || '')}
-            >
-              <IconDeleteOutline />
-            </BtnText>
-          </BtnGroup>
-        )}
+        {context.status === StatusEnum.editing &&
+          context.mode === ModeEnum.test && (
+            <BtnGroup className='clearfix' style={{ float: 'right' }}>
+              <Radio
+                key='actor'
+                checked={section.role === RoleEnum.actor}
+                onChange={() =>
+                  editSection(section.id || '', { role: RoleEnum.actor })
+                }
+              >
+                填寫者
+              </Radio>
+              <Radio
+                key='reviewer'
+                checked={section.role === RoleEnum.reviewer}
+                onChange={() =>
+                  editSection(section.id || '', { role: RoleEnum.reviewer })
+                }
+              >
+                評核者
+              </Radio>
+              <BtnText
+                key='delete'
+                theme='danger'
+                onClick={() => deleteSection(section.id || '')}
+              >
+                <IconDeleteOutline />
+              </BtnText>
+            </BtnGroup>
+          )}
       </div>
       <div className='section-body'>
         {context.status === StatusEnum.editing ? (

@@ -12,7 +12,7 @@ export default defineConfig({
       exclude: ['src/**/*.test.*', 'src/**/*.spec.*'],
       outDirs: 'dist',
       copyDtsFiles: false,
-        bundleTypes: true
+      bundleTypes: true
     }),
   ],
   build: {
