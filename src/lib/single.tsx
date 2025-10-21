@@ -52,6 +52,20 @@ const StyledOption = styled.div`
       color: var(--color-danger);
     }
   }
+
+  .option-content {
+      display: flex;
+      align-items: baseline;
+  }
+    
+  .option-content-answer {
+      min-width: 1em;
+      margin-right: 2px;
+  }
+    
+  .option-content-label {
+      line-height: 1.3;
+  }
 `
 
 const getInitOptions: (id: string) => SingleProps['options'] = (id: string) => {
@@ -205,7 +219,17 @@ export const SingleComponent = (props: SingleProps) => {
       return (
         <StyledOption key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )
@@ -220,7 +244,17 @@ export const SingleComponent = (props: SingleProps) => {
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )
@@ -247,7 +281,17 @@ export const SingleComponent = (props: SingleProps) => {
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )
@@ -270,7 +314,17 @@ export const SingleComponent = (props: SingleProps) => {
       return (
         <StyledOption className={statusClass} key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )
