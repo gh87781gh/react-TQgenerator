@@ -12,7 +12,8 @@ import {
   FieldAnswerKeys,
   TypeKeysEnum,
   ModeEnum,
-  StatusEnum
+  StatusEnum,
+  RoleEnum
 } from '../types'
 
 const StyledAnswerType = styled.div`
@@ -200,7 +201,7 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
             />
           </div>
         )}
-        {props.mode === ModeEnum.test && props.role === context.role && (
+        {props.mode === ModeEnum.test && context.role === RoleEnum.reviewer && (
           <>
             <div style={{ textAlign: 'right' }}>
               <BtnGroup>
