@@ -91,7 +91,7 @@ export const MultipleComponent = (props: MultipleProps) => {
       key: 'label' | 'isChecked' | 'optionScore',
       value?: string | boolean | number
     ) => {
-      let { answer, response, options, finalScore } = props
+      let { answer, response, options, finalScore, isPass } = props
       if (key === 'isChecked') {
         if (context.status === StatusEnum.editing) {
           if (value && !(answer as string[])?.includes(optionKey)) {
@@ -115,10 +115,11 @@ export const MultipleComponent = (props: MultipleProps) => {
            */
           if (context.mode === ModeEnum.test) {
             // 檢查response是否完全符合answer，符合則加該題分數，不符合則得0分
-            const isPass = (response as string[]).every((key) =>
+            const isPassCalc = (response as string[]).every((key) =>
               (answer as string[]).includes(key)
-            )
-            finalScore = isPass ? props.score : 0
+            ) && (answer as string[]).length === (response as string[]).length
+            finalScore = isPassCalc ? props.score : 0
+            isPass = isPassCalc
           } else if (context.mode === ModeEnum.questionnaire) {
             // 抓所有已勾選的option，將其optionScore累加到該題得分裡
             const correctOptions = options.filter((option) =>
@@ -129,7 +130,7 @@ export const MultipleComponent = (props: MultipleProps) => {
             }, 0)
           }
         }
-        props.updateSection({ ...props, answer, response, finalScore })
+        props.updateSection({ ...props, answer, response, finalScore, isPass })
       }
 
       if (key === 'label' || key === 'optionScore') {
@@ -275,10 +276,7 @@ export const MultipleComponent = (props: MultipleProps) => {
         }
       }
       return (
-        <StyledOption
-          className={`${answerClass} ${passedClass}`}
-          key={option.key}
-        >
+        <StyledOption key={option.key}>
           <Checkbox
             disabled={props.role !== context.role}
             checked={(props.response as string[])?.includes(option.key)}
@@ -290,7 +288,9 @@ export const MultipleComponent = (props: MultipleProps) => {
               )
             }
           >
-            {getOptionLabel(index)} {option.label}
+            <span className={`${answerClass} ${passedClass}`}>
+              {getOptionLabel(index)} {option.label}
+            </span>
           </Checkbox>
         </StyledOption>
       )
@@ -311,12 +311,11 @@ export const MultipleComponent = (props: MultipleProps) => {
         }
       }
       return (
-        <StyledOption className={statusClass} key={option.key}>
-          <Checkbox
-            disabled={true}
-            checked={(props.response as string[])?.includes(option.key)}
-          >
-            {getOptionLabel(index)} {option.label}
+        <StyledOption key={option.key}>
+          <Checkbox disabled={true} checked={(props.response as string[])?.includes(option.key)}>
+            <span className={statusClass}>
+              {getOptionLabel(index)} {option.label}
+            </span>
           </Checkbox>
         </StyledOption>
       )
