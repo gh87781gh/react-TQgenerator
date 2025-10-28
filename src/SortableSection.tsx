@@ -154,15 +154,15 @@ const SectionContent: React.FC<SectionContentProps> = ({
               >
                 評核者
               </Radio>
-              <BtnText
-                key='delete'
-                theme='danger'
-                onClick={() => deleteSection(section.id || '')}
-              >
-                <IconDeleteOutline />
-              </BtnText>
             </BtnGroup>
           )}
+        <BtnText
+          key='delete'
+          theme='danger'
+          onClick={() => deleteSection(section.id || '')}
+        >
+          <IconDeleteOutline />
+        </BtnText>
       </div>
       <div className='section-body'>
         {context.status === StatusEnum.editing ? (
