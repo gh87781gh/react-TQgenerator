@@ -70,6 +70,8 @@ const StyledTQgenerator = styled.div`
   }
 
   .section-title {
+    display: flex;
+    align-items: center;
     padding: 1rem;
     border-bottom: 1px solid var(--color-border-base);
     user-select: none;
@@ -87,6 +89,10 @@ const StyledTQgenerator = styled.div`
         margin-left: 1rem;
         margin-right: 1rem;
       }
+    }
+      
+    > button {
+          margin-left: auto;
     }
 
     .section-title-status {
