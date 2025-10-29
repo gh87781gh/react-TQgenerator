@@ -115,11 +115,11 @@ export const MultipleComponent = (props: MultipleProps) => {
            */
           if (context.mode === ModeEnum.test) {
             // 檢查response是否完全符合answer，符合則加該題分數，不符合則得0分
-            const isPassCalc = (response as string[]).every((key) =>
+            const isPassedCalculation = (response as string[]).every((key) =>
               (answer as string[]).includes(key)
             ) && (answer as string[]).length === (response as string[]).length
-            finalScore = isPassCalc ? props.score : 0
-            isPass = isPassCalc
+            finalScore = isPassedCalculation ? props.score : 0
+            isPass = isPassedCalculation
           } else if (context.mode === ModeEnum.questionnaire) {
             // 抓所有已勾選的option，將其optionScore累加到該題得分裡
             const correctOptions = options.filter((option) =>
