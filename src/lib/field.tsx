@@ -46,8 +46,6 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
   const { Label, Radio, Textarea, Input, InputNumber, DatePicker } = formItems
   const { BtnGroup, BtnPrimary } = btnItems
 
-  console.log('🟢🟢🟢', props.response, dayjs(props.response).isValid())
-
   const [responseDate, setResponseDate] = useState<dayjs.Dayjs | null>(
     dayjs(props.response).isValid() ? dayjs(props.response) : null
   )
