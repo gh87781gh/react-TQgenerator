@@ -52,6 +52,20 @@ const StyledOption = styled.div`
       color: var(--color-danger);
     }
   }
+
+  .option-content {
+      display: flex;
+      align-items: baseline;
+  }
+    
+  .option-content-answer {
+      min-width: 1em;
+      margin-right: 2px;
+  }
+    
+  .option-content-label {
+      line-height: 1.3;
+  }
 `
 
 const getInitOptions: (id: string) => SingleProps['options'] = (id: string) => {
@@ -81,7 +95,7 @@ export const SingleComponent = (props: SingleProps) => {
   const { components, utility } = context
   const { icons } = utility
   const { formItems, btnItems } = components
-  const { Input, Label, Radio, InputNumber } = formItems
+  const { Label, Radio, InputNumber, Textarea } = formItems
   const { BtnOutline, BtnText } = btnItems
 
   const editOptions = useCallback(
@@ -152,11 +166,11 @@ export const SingleComponent = (props: SingleProps) => {
       return (
         <StyledEditingOption key={option.key}>
           <div>{getOptionLabel(index)}</div>
-          <Input
+          <Textarea
             value={option.label}
             onChange={(e: any) =>
-              editOptions(option.key, 'label', e.target.value)
-            }
+              editOptions(option.key, 'label', e.target.value)}
+            autoSize={{ minRows: 1, maxRows: 4 }}
           />
           <div className='option-result'>
             {props.mode === ModeEnum.test && (
@@ -205,7 +219,17 @@ export const SingleComponent = (props: SingleProps) => {
       return (
         <StyledOption key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )
@@ -220,7 +244,17 @@ export const SingleComponent = (props: SingleProps) => {
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )
@@ -247,7 +281,17 @@ export const SingleComponent = (props: SingleProps) => {
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )
@@ -270,7 +314,17 @@ export const SingleComponent = (props: SingleProps) => {
       return (
         <StyledOption className={statusClass} key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )

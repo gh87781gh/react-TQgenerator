@@ -51,6 +51,25 @@ const StyledOption = styled.div`
       color: var(--color-danger) !important;
     }
   }
+
+  .ant-checkbox {
+      align-self: flex-start;
+      padding: 12px 0
+  }
+
+  .option-content {
+      display: flex;
+      align-items: baseline;
+  }
+    
+  .option-content-answer {
+      min-width: 1em;
+      margin-right: 2px;
+  }
+    
+  .option-content-label {
+      line-height: 1.3;
+  }
 `
 
 const getInitOptions: (id: string) => MultipleProps['options'] = (
@@ -82,7 +101,7 @@ export const MultipleComponent = (props: MultipleProps) => {
   const { icons } = utility
   const { IconDeleteOutline } = icons
   const { formItems, btnItems } = components
-  const { Input, Label, InputNumber, Checkbox } = formItems
+  const { Label, InputNumber, Checkbox, Textarea } = formItems
   const { BtnOutline, BtnText } = btnItems
 
   const editOptions = useCallback(
@@ -170,11 +189,12 @@ export const MultipleComponent = (props: MultipleProps) => {
       return (
         <StyledEditingOption key={option.key}>
           <div>{getOptionLabel(index)}</div>
-          <Input
+          <Textarea
             value={option.label}
             onChange={(e: any) =>
               editOptions(option.key, 'label', e.target.value)
             }
+            autoSize={{ minRows: 1, maxRows: 4 }}
           />
           <div className='option-result'>
             {props.mode === ModeEnum.test && (
@@ -231,7 +251,17 @@ export const MultipleComponent = (props: MultipleProps) => {
       return (
         <StyledOption key={option.key}>
           <Checkbox disabled={true}>
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Checkbox>
         </StyledOption>
       )
@@ -252,7 +282,17 @@ export const MultipleComponent = (props: MultipleProps) => {
               )
             }
           >
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Checkbox>
         </StyledOption>
       )
@@ -290,7 +330,17 @@ export const MultipleComponent = (props: MultipleProps) => {
               )
             }
           >
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Checkbox>
         </StyledOption>
       )
@@ -316,7 +366,17 @@ export const MultipleComponent = (props: MultipleProps) => {
             disabled={true}
             checked={(props.response as string[])?.includes(option.key)}
           >
-            {getOptionLabel(index)} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Checkbox>
         </StyledOption>
       )

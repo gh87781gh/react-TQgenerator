@@ -43,6 +43,18 @@ const StyledOption = styled.div`
       color: var(--color-danger);
     }
   }
+
+  .option-content {
+    display: flex;
+    align-items: baseline;
+  }
+  .option-content-answer {
+    min-width: 1em;
+    margin-right: 2px;
+  }
+  .option-content-label {
+    line-height: 1.3;
+  }
 `
 
 const answerOptions = ['O', 'X']
@@ -75,7 +87,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
   const context = useContext(MyContext)
   const { components } = context
   const { formItems } = components
-  const { Input, Label, Radio } = formItems
+  const { Label, Radio, Textarea } = formItems
 
   const editOptions = useCallback(
     (
@@ -134,11 +146,12 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
       return (
         <StyledEditingOption key={option.key}>
           <div>{answerOptions[index]}</div>
-          <Input
+          <Textarea
             value={option.label}
             onChange={(e: any) =>
               editOptions(option.key, 'label', e.target.value)
             }
+            autoSize={{ minRows: 1, maxRows: 4 }}
           />
           {props.mode === ModeEnum.test && (
             <div style={{ width: '200px' }}>
@@ -159,7 +172,17 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
       return (
         <StyledOption key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
-            {answerOptions[index]} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {answerOptions[index]}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )
@@ -174,7 +197,17 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >
-            {answerOptions[index]} {option.label}
+            <div className="option-content">
+              <span className="option-content-answer">
+                {answerOptions[index]}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
           </Radio>
         </StyledOption>
       )
@@ -202,7 +235,17 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
             onChange={() => editOptions(option.key, 'isChecked')}
           >
             <span className={statusClass}>
-              {answerOptions[index]} {option.label}
+             <div className="option-content">
+              <span className="option-content-answer">
+                {answerOptions[index]}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
             </span>
           </Radio>
         </StyledOption>
@@ -227,7 +270,17 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
         <StyledOption key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
             <span className={statusClass}>
-              {answerOptions[index]} {option.label}
+              <div className="option-content">
+              <span className="option-content-answer">
+                {answerOptions[index]}
+              </span>
+              <span
+                className="option-content-label"
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
             </span>
           </Radio>
         </StyledOption>
