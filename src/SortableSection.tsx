@@ -76,15 +76,14 @@ const SectionContent: React.FC<SectionContentProps> = ({
   const { utility, components } = context
   const { icons } = utility
   const { IconDrag, IconDeleteOutline } = icons
+  const { formItems, btnItems, editor } = components
   const {
-    formItems,
-    btnItems
-    // editor
-  } = components
-  // const { component: Editor } = editor
-  const { InputNumber, Radio, Textarea } = formItems
+    InputNumber,
+    Radio
+    // Textarea
+  } = formItems
   const { BtnGroup, BtnText } = btnItems
-  // const { component: Editor, onUploadImage } = editor
+  const { component: Editor, onUploadImage } = editor
 
   return (
     <div
@@ -167,29 +166,43 @@ const SectionContent: React.FC<SectionContentProps> = ({
       <div className='section-body'>
         {context.status === StatusEnum.editing ? (
           <div className='section-body-question active'>
-            <Textarea
+            {/* <Textarea
               value={section.question}
               onChange={(e: any) =>
                 editSection(section.id || '', { question: e.target.value })
               }
-            />
+            /> */}
 
             {/* TODO */}
             {/* <Editor /> */}
-            {/* <Editor
-              id={section.id}
-              title=''
-              height={200}
-              value={section.question}
-              onSave={(
-                content: string
-                // setIsLoading: (value: boolean) => void,
-                // contentH: number | null
-              ) => {
-                editSection(section.id || '', { question: content })
+            <div
+              style={{
+                width: '100%',
+                height: '400px',
+                overflowY: 'auto',
+                border: '1px solid rgb(217,217,217)'
               }}
-              onUploadImage={onUploadImage}
-            /> */}
+            >
+              <Editor
+                id={section.id}
+                value={section.question}
+                onChange={(content: string) => {
+                  editSection(section.id || '', { question: content })
+                }}
+                onUploadImage={onUploadImage}
+                // title=''
+                // height={200}
+                // value={section.question}
+                // onSave={(
+                //   content: string
+                //   // setIsLoading: (value: boolean) => void,
+                //   // contentH: number | null
+                // ) => {
+                //   editSection(section.id || '', { question: content })
+                // }}
+                // onUploadImage={onUploadImage}
+              />
+            </div>
           </div>
         ) : (
           <div

@@ -201,7 +201,11 @@ export type TQgeneratorProps = {
     },
     editor: {
       component: React.ComponentType<any>,
-      onUploadImage: (image: string) => void
+      onUploadImage?: (
+        file: File,
+        onProgress?: (event: { progress: number }) => void,
+        abortSignal?: AbortSignal
+      ) => Promise<string>
     },
     modal: React.ComponentType<any>,
   },
