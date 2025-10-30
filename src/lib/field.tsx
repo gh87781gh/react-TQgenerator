@@ -47,9 +47,10 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
   const { BtnGroup, BtnPrimary } = btnItems
 
   const [responseDate, setResponseDate] = useState<dayjs.Dayjs | null>(
-    dayjs(props.response).isValid() ? dayjs(props.response) : null
+    props.answerType === 'date' ? dayjs(props.response) : null
   )
   useEffect(() => {
+    if (props.answerType !== 'date') return
     props.updateSection({
       ...props,
       response: responseDate?.toISOString() || null
