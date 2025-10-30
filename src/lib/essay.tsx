@@ -1,5 +1,5 @@
 import { useCallback, useContext } from 'react'
-import { EssayProps, TypeKeysEnum, StatusEnum, ModeEnum } from '../types'
+import { EssayProps, TypeKeysEnum, StatusEnum, ModeEnum, RoleEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 
 export const initEssay: Pick<EssayProps, 'type' | 'answer' | 'response'> = {
@@ -78,7 +78,7 @@ export const EssayComponent = (props: EssayProps) => {
           value={props.response}
           onChange={(e: any) => editSection('response', e.target.value)}
         />
-        {props.mode === ModeEnum.test && props.role === context.role && (
+        {props.mode === ModeEnum.test && context.role === RoleEnum.reviewer && (
           <>
             <div style={{ textAlign: 'right' }}>
               <BtnGroup>
