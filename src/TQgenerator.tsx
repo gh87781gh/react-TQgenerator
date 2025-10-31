@@ -91,8 +91,10 @@ const StyledTQgenerator = styled.div`
       }
     }
       
-    > button {
-          margin-left: auto;
+    > .section-title-actions {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
     }
 
     .section-title-status {
