@@ -47,15 +47,23 @@ export const FieldComponent = (props: FieldProps<FieldAnswerKeys>) => {
   const { Label, Radio, Textarea, Input, InputNumber, DatePicker } = formItems
   const { BtnGroup, BtnPrimary } = btnItems
 
-  const [responseDate, setResponseDate] = useState<dayjs.Dayjs | null>(
-    props.answerType === 'date' ? dayjs(props.response) : null
+  const [responseDate, setResponseDate] = useState<dayjs.Dayjs | null>(() => {
+      if (props.answerType !== 'date') return null
+      if (!props.response) return null
+
+      const date = dayjs(props.response)
+      return date.isValid() ? date : null
+    }
   )
   useEffect(() => {
     if (props.answerType !== 'date') return
-    props.updateSection({
-      ...props,
-      response: responseDate?.toISOString() || null
-    })
+    const newResponse = responseDate?.isValid() ? responseDate.toISOString() : null
+    if (props.response !== newResponse) {
+      props.updateSection({
+        ...props,
+        response: newResponse
+      })
+    }
   }, [responseDate])
 
   const editSection = useCallback(
