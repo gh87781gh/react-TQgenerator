@@ -135,7 +135,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
           )}
         <div className={'section-title-actions'}>
           {context.status === StatusEnum.editing &&
-            context.mode === ModeEnum.test && (
+            context.mode === ModeEnum.questionnaire && (
               <BtnGroup className='clearfix' style={{ float: 'right' }}>
                 <Radio
                   key='actor'

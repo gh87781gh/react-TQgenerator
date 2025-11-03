@@ -1,6 +1,6 @@
 {
   "name": "react-tqgenerator",
-  "version": "1.3.7",
+  "version": "1.3.8",
   "description": "A React component library for generating test questions with support for multiple question types",
   "type": "module",
   "main": "./dist/index.js",
