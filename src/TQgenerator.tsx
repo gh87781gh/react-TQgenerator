@@ -215,7 +215,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }
 
   const { formItems, btnItems, modal: Modal } = components
-  const { Select, SearchSelect } = formItems
+  const { Select, SearchSelect, Textarea } = formItems
   const { BtnPrimary, BtnOutline, BtnGroup } = btnItems
 
   const [type, setType] = useState<TypeKeysEnum>(
@@ -506,6 +506,17 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     return true
   }, [config, status])
 
+  const [isShowJsonEditor, setIsShowJsonEditor] = useState(false)
+  const renderActionJsonEditor = useCallback(() => {
+    return (
+      status === StatusEnum.editing &&
+      (<BtnGroup style={{ textAlign: 'right', marginBottom: '1rem' }}>
+        <BtnOutline onClick={() => setIsShowJsonEditor(true)}>JSON 編輯模式</BtnOutline>
+        <BtnOutline onClick={() => setIsShowJsonEditor(false)}>UI 編輯模式</BtnOutline>
+      </BtnGroup>)
+    )
+  }, [isShowJsonEditor])
+
   return (
     <MyContext.Provider
       value={{
@@ -524,7 +535,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     >
       <StyledTQgenerator>
         {renderActionSubmitEditing?.()}
-
+        {renderActionJsonEditor?.()}
         {/* {isShowSections &&
           props.sections
             .filter((section) => section.id !== null)
@@ -540,7 +551,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               )
             })} */}
 
-        {isShowSections && (
+        {isShowSections && !isShowJsonEditor && (
           <DndContext
             sensors={[mouseSensor, pointerSensor]}
             onDragEnd={handleDragEnd}
@@ -568,6 +579,18 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             </SortableContext>
           </DndContext>
         )}
+        { isShowJsonEditor && (
+           <div>
+             <Textarea
+               style={{ width: '100%', height: '300px', fontFamily: 'monospace', fontSize: '1em' }}
+               value={JSON.stringify(props.sections, null, 2)}
+               autoSize={ true }
+               onChange={(e:any) => {
+                 setSections?.(JSON.parse(e.target.value))
+               }}
+             />
+           </div>
+         )}
         <div
           style={{
             width: '100%',
@@ -577,7 +600,9 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             alignItems: 'center'
           }}
         >
-          {renderAction[status as keyof typeof renderAction]?.()}
+          {status === StatusEnum.editing
+            ? (!isShowJsonEditor ? renderAction[status as keyof typeof renderAction]?.() : null)
+            : renderAction[status as keyof typeof renderAction]?.()}
         </div>
 
         <div className='version'>v{packageJson.version}</div>
