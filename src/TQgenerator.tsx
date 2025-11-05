@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import _ from 'lodash'
@@ -215,7 +215,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }
 
   const { formItems, btnItems, modal: Modal } = components
-  const { Select, SearchSelect } = formItems
+  const { Select, SearchSelect, Textarea } = formItems
   const { BtnPrimary, BtnOutline, BtnGroup } = btnItems
 
   const [type, setType] = useState<TypeKeysEnum>(
@@ -326,7 +326,13 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           <BtnOutline onClick={() => actions?.onPreviewEditing?.()}>
             預覽
           </BtnOutline>
-          <BtnPrimary onClick={() => actions?.onSubmitEditing?.()}>
+          <BtnPrimary onClick={() => {
+            if (isShowJsonEditor) {
+              const ok = saveJsonEditor()
+              if (!ok) return
+            }
+            actions?.onSubmitEditing?.()
+          }}>
             儲存
           </BtnPrimary>
         </BtnGroup>
@@ -506,6 +512,135 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     return true
   }, [config, status])
 
+  const [isShowJsonEditor, setIsShowJsonEditor] = useState(false)
+  const [jsonEditorValue, setJsonEditorValue] = useState<string>('')
+  const [jsonEditorError, setJsonEditorError] = useState<string>('')
+  // keep track of previous isShowJsonEditor so we only populate editor when opening
+  const prevIsShowJsonEditor = useRef<boolean>(isShowJsonEditor)
+
+  // Track the latest sections coming from props to avoid races where
+  // a JSON save/parse overwrites UI edits that haven't propagated yet.
+  const latestSectionsRef = useRef<SectionProps<TypeKeysEnum>[]>(props.sections)
+  useEffect(() => {
+    latestSectionsRef.current = props.sections
+  }, [props.sections])
+
+  // Simple immediate parser used while editing JSON.
+  const tryParseAndSet = useCallback((val: string) => {
+    setJsonEditorValue(val)
+    if (!val || !val.trim()) {
+      setJsonEditorError('內容為空，請輸入 JSON')
+      return
+    }
+    try {
+      const parsed = JSON.parse(val)
+      if (!Array.isArray(parsed)) {
+        setJsonEditorError('JSON 必須為陣列，格式不正確')
+        return
+      }
+      const invalidIndex = parsed.findIndex(
+        (s: any) => !s || typeof s.id !== 'string' || s.id.trim() === ''
+      )
+      if (invalidIndex !== -1) {
+        setJsonEditorError(`第 ${invalidIndex + 1} 個 section 缺少有效的 id`)
+        return
+      }
+
+      // parsed is valid JSON array -> immediately update sections
+      setSections?.(parsed as SectionProps<TypeKeysEnum>[])
+      setJsonEditorError('')
+    } catch (e) {
+      // show parse error but don't overwrite sections
+      setJsonEditorError('JSON 格式錯誤，請檢查內容')
+    }
+  }, [setSections, setJsonEditorError])
+
+  const saveJsonEditor = useCallback(() => {
+    if (!jsonEditorValue.trim()) {
+      setJsonEditorError('內容為空，請輸入 JSON')
+      return false
+    }
+    try {
+      const parsed = JSON.parse(jsonEditorValue)
+
+      if (!Array.isArray(parsed)) {
+        setJsonEditorError('JSON 必須為陣列，格式不正確')
+        return false
+      }
+
+      const invalidIndex = parsed.findIndex(
+        (s: any) => !s || typeof s.id !== 'string' || s.id.trim() === ''
+      )
+      if (invalidIndex !== -1) {
+        setJsonEditorError(`第 ${invalidIndex + 1} 個 section 缺少有效的 id`)
+        return false
+      }
+
+      // Merge parsed sections with the latestSectionsRef to avoid losing
+      // recently-edited fields (e.g. question text) that might not have
+      // propagated into props.sections yet. Keep orig.question when parsed
+      // has empty/undefined question.
+      const merged = (parsed as SectionProps<TypeKeysEnum>[]).map((p) => {
+        const orig = latestSectionsRef.current.find((s) => s.id === p.id)
+        if (!orig) return p
+        return {
+          ...orig,
+          ...p,
+          question:
+            p.question === '' || p.question === null || p.question === undefined
+              ? orig.question
+              : p.question
+        } as SectionProps<TypeKeysEnum>
+      })
+
+      setSections?.(merged)
+      latestSectionsRef.current = merged
+      setJsonEditorError('')
+      return true
+    } catch (err: unknown) {
+      setJsonEditorError('JSON 格式錯誤，請檢查內容')
+      return false
+    }
+  },[jsonEditorValue, setSections, setJsonEditorError])
+  const renderActionJsonEditor = useCallback(() => {
+    return (
+      status === StatusEnum.editing &&
+      (<BtnGroup style={{ textAlign: 'right', marginBottom: '1rem' }}>
+        <BtnOutline onClick={() => setIsShowJsonEditor(true)}>JSON 編輯模式</BtnOutline>
+        <BtnOutline
+          onClick={() => {
+            if (isShowJsonEditor) {
+              if (saveJsonEditor()) {
+                setIsShowJsonEditor(false)
+              }
+            } else {
+              setIsShowJsonEditor(false)
+            }
+          }}
+        >
+          UI 編輯模式
+        </BtnOutline>
+      </BtnGroup>)
+    )
+  }, [isShowJsonEditor, saveJsonEditor])
+
+  useEffect(() => {
+    // Populate editor from latestSectionsRef when opening, and keep
+    // the editor in sync with latestSectionsRef when closing.
+    if (isShowJsonEditor) {
+      if (!prevIsShowJsonEditor.current) {
+        // opening: read from latestSectionsRef to avoid races
+        setJsonEditorValue(JSON.stringify(latestSectionsRef.current, null, 2))
+        setJsonEditorError('')
+      }
+    } else {
+      // closing: update editor value to reflect latest sections
+      setJsonEditorValue(JSON.stringify(latestSectionsRef.current, null, 2))
+      setJsonEditorError('')
+    }
+    prevIsShowJsonEditor.current = isShowJsonEditor
+  }, [isShowJsonEditor])
+
   return (
     <MyContext.Provider
       value={{
@@ -524,7 +659,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     >
       <StyledTQgenerator>
         {renderActionSubmitEditing?.()}
-
+        {renderActionJsonEditor?.()}
         {/* {isShowSections &&
           props.sections
             .filter((section) => section.id !== null)
@@ -540,7 +675,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               )
             })} */}
 
-        {isShowSections && (
+        {isShowSections && !isShowJsonEditor && (
           <DndContext
             sensors={[mouseSensor, pointerSensor]}
             onDragEnd={handleDragEnd}
@@ -568,6 +703,22 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             </SortableContext>
           </DndContext>
         )}
+        { isShowJsonEditor && (
+           <div>
+             <Textarea
+               style={{ width: '100%', height: '300px', fontFamily: 'monospace', fontSize: '1em' }}
+               value={jsonEditorValue}
+               autoSize={ true }
+               onChange={(e:any) => {
+                 const val = e.target.value
+                 tryParseAndSet(val)
+               }}
+             />
+             {jsonEditorError && (
+               <div style={{ color: 'red', marginTop: '8px' }}>{jsonEditorError}</div>
+             )}
+           </div>
+         )}
         <div
           style={{
             width: '100%',
@@ -577,7 +728,9 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             alignItems: 'center'
           }}
         >
-          {renderAction[status as keyof typeof renderAction]?.()}
+          {status === StatusEnum.editing
+            ? (!isShowJsonEditor ? renderAction[status as keyof typeof renderAction]?.() : null)
+            : renderAction[status as keyof typeof renderAction]?.()}
         </div>
 
         <div className='version'>v{packageJson.version}</div>
