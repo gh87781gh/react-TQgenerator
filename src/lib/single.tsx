@@ -165,18 +165,24 @@ export const SingleComponent = (props: SingleProps) => {
 
   const passedClass = useMemo(
     () => (option: SingleProps['options'][number]) => {
-      if (context.mode === ModeEnum.test) {
-        const theme = props.isPass ? 'passed' : 'failed'
+      if (
+        context.mode === ModeEnum.test &&
+        context.config?.isAllowReviewWithAnswer
+      ) {
         if (props.response === option.key) {
-          return theme
-        } else return ''
+          return props.isPass ? 'passed' : 'failed'
+        }
       }
+      return ''
     },
     [context, props]
   )
   const answerClass = useMemo(
     () => (option: SingleProps['options'][number]) => {
-      if (context.mode === ModeEnum.test)
+      if (
+        context.mode === ModeEnum.test &&
+        context.config?.isAllowReviewWithAnswer
+      )
         return props.answer === option.key ? 'answer' : ''
 
       return ''

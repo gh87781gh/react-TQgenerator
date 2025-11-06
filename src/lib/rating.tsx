@@ -203,7 +203,6 @@ export const RatingComponent = (props: RatingProps) => {
             min={props.min}
             max={props.max}
             precision={0}
-            onChange={(value: any) => editSection('rating', Number(value) || 0)}
             style={{ width: '150px' }}
           />
         ) : (

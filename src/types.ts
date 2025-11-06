@@ -138,10 +138,9 @@ export type TQgeneratorProps = {
     isAllowReCorrect?: boolean | null
     isReCorrecting?: boolean
     isPreviewEditing?: boolean | null
-    isAllowReviewScore?: boolean | null
+    isAllowReview?: boolean | null
     isAllowReviewWithAnswer?: boolean | null
     isShowCorrectContent?: boolean | null
-    isShowCorrectContentResult?: boolean | null
     isShowCurrentFinalTotalScore?: boolean | null
     isShowCorrectActionPass?: boolean | null
     isShowCorrectActionSubmit?: boolean | null
@@ -208,6 +207,7 @@ export type TQgeneratorProps = {
       ) => Promise<string>
     },
     modal: React.ComponentType<any>,
+    message: any
   },
   utility: {
     icons: {

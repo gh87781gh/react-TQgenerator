@@ -35,6 +35,7 @@ import { initRating } from './lib/rating'
 import { SortableItem } from './SortableSection'
 import { SectionContent } from './SortableSection'
 import { autoCorrectQuestionnaire, autoCorrectTest } from './autoCorrect'
+import { validateTestResponse } from './validateTestResponse'
 
 const StyledTQgenerator = styled.div`
   width: 100%;
@@ -213,7 +214,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     return null
   }
 
-  const { formItems, btnItems, modal: Modal } = components
+  const { formItems, btnItems, modal: Modal, message: Message } = components
   const { Select, SearchSelect } = formItems
   const { BtnPrimary, BtnOutline, BtnGroup } = btnItems
 
@@ -360,6 +361,12 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               setIsShowSelectReviewer(true)
             } else {
               if (mode === ModeEnum.test) {
+                const isValidPassed = validateTestResponse(props.sections)
+                console.log('isValidPassed:', isValidPassed)
+                if (!isValidPassed) {
+                  Message?.error('有未完成的題目')
+                  return
+                }
                 const score = autoCorrectTest(props.sections)
                 actions?.onSubmitResponse?.(score, null)
               } else if (mode === ModeEnum.questionnaire) {
@@ -498,10 +505,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       return config?.isShowCorrectContent
     }
 
-    if (status === StatusEnum.finished) {
-      return config?.isShowCorrectContentResult
-    }
-
     return true
   }, [config, status])
 
@@ -597,6 +600,13 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               setIsShowSelectReviewer(false)
               let score = 0
               if (mode === ModeEnum.test) {
+                const isValidPassed = validateTestResponse(props.sections)
+                console.log('isValidPassed:', isValidPassed)
+                if (!isValidPassed) {
+                  console.log('Message', Message)
+                  Message?.error('有未完成的題目')
+                  return
+                }
                 score = autoCorrectTest(props.sections)
               } else if (mode === ModeEnum.questionnaire) {
                 score = autoCorrectQuestionnaire(props.sections)

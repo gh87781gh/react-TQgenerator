@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
@@ -85,6 +85,13 @@ const SectionContent: React.FC<SectionContentProps> = ({
   const { BtnGroup, BtnText } = btnItems
   const { component: Editor, onUploadImage } = editor
 
+  useEffect(() => {
+    console.log('context', context)
+  }, [context])
+  useEffect(() => {
+    console.log('section', section)
+  }, [section])
+
   return (
     <div
       className={`section ${context.role === section.role ? 'responding' : ''}`}
@@ -99,7 +106,8 @@ const SectionContent: React.FC<SectionContentProps> = ({
         {context.mode === ModeEnum.test &&
           (context.status === StatusEnum.waiting_for_correct ||
             context.status === StatusEnum.finished) &&
-          section.isPass !== null && (
+          section.isPass !== null &&
+          context.config?.isAllowReview && (
             <span>
               <em
                 className={`section-title-status ${
