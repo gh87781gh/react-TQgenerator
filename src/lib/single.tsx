@@ -1,4 +1,4 @@
-import { useContext, useCallback } from 'react'
+import { useContext, useCallback, useMemo } from 'react'
 import { SingleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils'
@@ -54,17 +54,17 @@ const StyledOption = styled.div`
   }
 
   .option-content {
-      display: flex;
-      align-items: baseline;
+    display: flex;
+    align-items: baseline;
   }
-    
+
   .option-content-answer {
-      min-width: 1em;
-      margin-right: 2px;
+    min-width: 1em;
+    margin-right: 2px;
   }
-    
+
   .option-content-label {
-      line-height: 1.3;
+    line-height: 1.3;
   }
 `
 
@@ -167,6 +167,22 @@ export const SingleComponent = (props: SingleProps) => {
     props.updateSection({ ...props, options: newOptions })
   }, [props])
 
+  const passedClass = useMemo(() => {
+    if (context.mode === ModeEnum.test)
+      return props.isPass ? 'passed' : 'failed'
+
+    return ''
+  }, [context, props])
+  const answerClass = useMemo(
+    () => (option: SingleProps['options'][number]) => {
+      if (context.mode === ModeEnum.test)
+        return props.answer === option.key ? 'answer' : ''
+
+      return ''
+    },
+    [context, props]
+  )
+
   const renderOptionsEditing = () => {
     return props.options.map((option, index) => {
       return (
@@ -175,7 +191,8 @@ export const SingleComponent = (props: SingleProps) => {
           <Textarea
             value={option.label}
             onChange={(e: any) =>
-              editOptions(option.key, 'label', e.target.value)}
+              editOptions(option.key, 'label', e.target.value)
+            }
             autoSize={{ minRows: 1, maxRows: 4 }}
           />
           <div className='option-result'>
@@ -225,12 +242,12 @@ export const SingleComponent = (props: SingleProps) => {
       return (
         <StyledOption key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
-            <div className="option-content">
-              <span className="option-content-answer">
+            <div className='option-content'>
+              <span className='option-content-answer'>
                 {getOptionLabel(index)}
               </span>
               <span
-                className="option-content-label"
+                className='option-content-label'
                 dangerouslySetInnerHTML={{
                   __html: option.label.replace(/\n/g, '<br />')
                 }}
@@ -250,12 +267,12 @@ export const SingleComponent = (props: SingleProps) => {
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >
-            <div className="option-content">
-              <span className="option-content-answer">
+            <div className='option-content'>
+              <span className='option-content-answer'>
                 {getOptionLabel(index)}
               </span>
               <span
-                className="option-content-label"
+                className='option-content-label'
                 dangerouslySetInnerHTML={{
                   __html: option.label.replace(/\n/g, '<br />')
                 }}
@@ -266,66 +283,30 @@ export const SingleComponent = (props: SingleProps) => {
       )
     })
   }
-  const renderOptionsCorrect = () => {
+  const renderOptionsCorrectAndFinished = () => {
     return props.options.map((option, index) => {
-      let statusClass = ''
-      if (props.isPass) {
-        if (props.response === option.key) {
-          statusClass = 'passed'
-        }
-      } else if (props.isPass === false) {
-        if (props.response === option.key) {
-          statusClass = 'failed'
-        } else if (props.answer === option.key) {
-          statusClass = 'answer'
-        }
-      }
       return (
         <StyledOption key={option.key}>
           <Radio
-            disabled={props.role !== context.role}
+            disabled={
+              props.role !== context.role ||
+              context.status === StatusEnum.finished
+            }
             checked={option.key === props.response}
-            onChange={() => editOptions(option.key, 'isChecked')}
+            onChange={() => {
+              if (context.status === StatusEnum.waiting_for_correct) {
+                editOptions(option.key, 'isChecked')
+              }
+            }}
           >
-            <div className={`option-content ${statusClass}`}>
-              <span className="option-content-answer">
+            <div
+              className={`option-content ${passedClass} ${answerClass(option)}`}
+            >
+              <span className='option-content-answer'>
                 {getOptionLabel(index)}
               </span>
               <span
-                className="option-content-label"
-                dangerouslySetInnerHTML={{
-                  __html: option.label.replace(/\n/g, '<br />')
-                }}
-              />
-            </div>
-          </Radio>
-        </StyledOption>
-      )
-    })
-  }
-  const renderOptionsFinished = () => {
-    return props.options.map((option, index) => {
-      let statusClass = ''
-      if (props.isPass) {
-        if (props.response === option.key) {
-          statusClass = 'passed'
-        }
-      } else if (props.isPass === false) {
-        if (props.response === option.key) {
-          statusClass = 'failed'
-        } else if (props.answer === option.key) {
-          statusClass = 'answer'
-        }
-      }
-      return (
-        <StyledOption key={option.key}>
-          <Radio disabled={true} checked={option.key === props.response}>
-            <div className={`option-content ${statusClass}`}>
-              <span className="option-content-answer">
-                {getOptionLabel(index)}
-              </span>
-              <span
-                className="option-content-label"
+                className='option-content-label'
                 dangerouslySetInnerHTML={{
                   __html: option.label.replace(/\n/g, '<br />')
                 }}
@@ -341,8 +322,8 @@ export const SingleComponent = (props: SingleProps) => {
     [StatusEnum.editing]: renderOptionsEditing,
     [StatusEnum.preview_editing]: renderOptionsPreviewEditing,
     [StatusEnum.waiting_for_response]: renderOptionsResponse,
-    [StatusEnum.waiting_for_correct]: renderOptionsCorrect,
-    [StatusEnum.finished]: renderOptionsFinished
+    [StatusEnum.waiting_for_correct]: renderOptionsCorrectAndFinished,
+    [StatusEnum.finished]: renderOptionsCorrectAndFinished
   } as const
   return (
     <>
