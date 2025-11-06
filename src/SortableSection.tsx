@@ -1,4 +1,4 @@
-import React, {useContext, useRef} from 'react'
+import React, { useContext } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
@@ -84,7 +84,6 @@ const SectionContent: React.FC<SectionContentProps> = ({
   } = formItems
   const { BtnGroup, BtnText } = btnItems
   const { component: Editor, onUploadImage } = editor
-  const isEditorInitialized = useRef(false);
 
   return (
     <div
@@ -193,16 +192,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
                 id={section.id}
                 value={section.question}
                 onChange={(content: string) => {
-                  if (
-                    !isEditorInitialized.current ||
-                    (content === '<p></p>' && section.question && section.question !== '<p></p>')
-                  ) {
-                    isEditorInitialized.current = true;
-                    return;
-                  }
-                  if (content !== section.question) {
                     editSection(section.id || '', { question: content });
-                  }
                 }}
                 onUploadImage={onUploadImage}
                 // title=''
