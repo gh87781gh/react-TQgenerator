@@ -362,7 +362,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             } else {
               if (mode === ModeEnum.test) {
                 const isValidPassed = validateTestResponse(props.sections)
-                console.log('isValidPassed:', isValidPassed)
                 if (!isValidPassed) {
                   Message?.error('有未完成的題目')
                   return
@@ -601,9 +600,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               let score = 0
               if (mode === ModeEnum.test) {
                 const isValidPassed = validateTestResponse(props.sections)
-                console.log('isValidPassed:', isValidPassed)
                 if (!isValidPassed) {
-                  console.log('Message', Message)
                   Message?.error('有未完成的題目')
                   return
                 }

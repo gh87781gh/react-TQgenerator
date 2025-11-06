@@ -85,13 +85,6 @@ const SectionContent: React.FC<SectionContentProps> = ({
   const { BtnGroup, BtnText } = btnItems
   const { component: Editor, onUploadImage } = editor
 
-  useEffect(() => {
-    console.log('context', context)
-  }, [context])
-  useEffect(() => {
-    console.log('section', section)
-  }, [section])
-
   return (
     <div
       className={`section ${context.role === section.role ? 'responding' : ''}`}
