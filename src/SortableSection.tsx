@@ -192,7 +192,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
                 id={section.id}
                 value={section.question}
                 onChange={(content: string) => {
-                  editSection(section.id || '', { question: content })
+                    editSection(section.id || '', { question: content });
                 }}
                 onUploadImage={onUploadImage}
                 // title=''

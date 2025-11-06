@@ -214,15 +214,16 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }
 
   const { formItems, btnItems, modal: Modal } = components
-  const { Select, SearchSelect } = formItems
+  const { Select, SearchSelect, Textarea } = formItems
   const { BtnPrimary, BtnOutline, BtnGroup } = btnItems
+  const [isShowJsonEditor, setIsShowJsonEditor] = useState(false)
 
   const [type, setType] = useState<TypeKeysEnum>(
     mode === ModeEnum.test
       ? TypeKeysForTest[0]
       : mode === ModeEnum.questionnaire
-      ? TypeKeysForQuest[0]
-      : TypeKeysEnum.是非題 // TODO 應該要是null
+        ? TypeKeysForQuest[0]
+        : TypeKeysEnum.是非題 // TODO 應該要是null
   )
   const addSection = (type: TypeKeysEnum) => {
     const id = uuid() as string
@@ -333,7 +334,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     )
   }, [actions, status])
   const renderActionEditing = useCallback(() => {
-    return (
+    return isShowJsonEditor ? null : (
       <div className='section-body-add'>
         <Select
           allowClear={false}
@@ -346,7 +347,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
       </div>
     )
-  }, [type, status, addSection])
+  }, [type, status, addSection, isShowJsonEditor])
   const [isShowSelectReviewer, setIsShowSelectReviewer] = useState(false)
   const [selectedReviewerID, setSelectedReviewerID] = useState<string | null>(
     assets?.classTeacherID ?? null
@@ -434,15 +435,15 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                   mode === ModeEnum.test
                     ? '批改'
                     : mode === ModeEnum.questionnaire
-                    ? '評核'
-                    : ''
+                      ? '評核'
+                      : ''
                 }`
               : `更新${
                   mode === ModeEnum.test
                     ? '批改'
                     : mode === ModeEnum.questionnaire
-                    ? '評核'
-                    : ''
+                      ? '評核'
+                      : ''
                 }`}
           </BtnPrimary>
         ) : null}
@@ -483,14 +484,14 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           }
         })
       : mode === ModeEnum.questionnaire
-      ? TypeKeysForQuest.map((key) => {
-          return {
-            key,
-            value: key,
-            label: key
-          }
-        })
-      : []
+        ? TypeKeysForQuest.map((key) => {
+            return {
+              key,
+              value: key,
+              label: key
+            }
+          })
+        : []
   }
 
   const isShowSections = useMemo(() => {
@@ -504,6 +505,21 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
 
     return true
   }, [config, status])
+
+  const renderActionJsonEditor = useCallback(() => {
+    return (
+      status === StatusEnum.editing && (
+        <BtnGroup style={{ textAlign: 'right', marginBottom: '1rem' }}>
+          <BtnOutline onClick={() => setIsShowJsonEditor(true)}>
+            JSON 編輯模式
+          </BtnOutline>
+          <BtnOutline onClick={() => setIsShowJsonEditor(false)}>
+            UI 編輯模式
+          </BtnOutline>
+        </BtnGroup>
+      )
+    )
+  }, [status])
 
   return (
     <MyContext.Provider
@@ -523,7 +539,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     >
       <StyledTQgenerator>
         {renderActionSubmitEditing?.()}
-
+        {renderActionJsonEditor?.()}
         {/* {isShowSections &&
           props.sections
             .filter((section) => section.id !== null)
@@ -539,7 +555,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               )
             })} */}
 
-        {isShowSections && (
+        {isShowSections && !isShowJsonEditor && (
           <DndContext
             sensors={[mouseSensor, pointerSensor]}
             onDragEnd={handleDragEnd}
@@ -566,6 +582,16 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
                 })}
             </SortableContext>
           </DndContext>
+        )}
+        {isShowJsonEditor && (
+          <Textarea
+            style={{ width: '100%', height: '300px', fontSize: '1em' }}
+            value={JSON.stringify(props.sections, null, 2)}
+            autoSize={true}
+            onChange={(e: any) => {
+              setSections?.(JSON.parse(e.target.value))
+            }}
+          />
         )}
         <div
           style={{
