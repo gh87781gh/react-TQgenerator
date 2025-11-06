@@ -319,7 +319,10 @@ export const MultipleComponent = (props: MultipleProps) => {
       return (
         <StyledOption key={option.key}>
           <Checkbox
-            disabled={props.role !== context.role}
+            disabled={
+              props.role !== context.role ||
+              context.status === StatusEnum.finished
+            }
             checked={(props.response as string[])?.includes(option.key)}
             onChange={() => {
               if (context.status === StatusEnum.waiting_for_correct) {
