@@ -1,4 +1,4 @@
-import { useContext, useCallback } from 'react'
+import { useContext, useCallback, useMemo } from 'react'
 import styled from 'styled-components'
 import { MultipleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
@@ -39,7 +39,15 @@ const StyledOption = styled.div`
     margin-right: var(--gap-normal);
   }
 
-  span {
+  .ant-checkbox {
+    align-self: flex-start;
+    padding: 12px 0;
+  }
+
+  .option-content {
+    display: flex;
+    align-items: baseline;
+
     &.answer {
       font-weight: 800;
       color: var(--color-black);
@@ -52,23 +60,13 @@ const StyledOption = styled.div`
     }
   }
 
-  .ant-checkbox {
-      align-self: flex-start;
-      padding: 12px 0
+  .option-content-answer {
+    min-width: 1em;
+    margin-right: 2px;
   }
 
-  .option-content {
-      display: flex;
-      align-items: baseline;
-  }
-    
-  .option-content-answer {
-      min-width: 1em;
-      margin-right: 2px;
-  }
-    
   .option-content-label {
-      line-height: 1.3;
+    line-height: 1.3;
   }
 `
 
@@ -134,9 +132,10 @@ export const MultipleComponent = (props: MultipleProps) => {
            */
           if (context.mode === ModeEnum.test) {
             // 檢查response是否完全符合answer，符合則加該題分數，不符合則得0分
-            const isPassedCalculation = (response as string[]).every((key) =>
-              (answer as string[]).includes(key)
-            ) && (answer as string[]).length === (response as string[]).length
+            const isPassedCalculation =
+              (response as string[]).every((key) =>
+                (answer as string[]).includes(key)
+              ) && (answer as string[]).length === (response as string[]).length
             finalScore = isPassedCalculation ? props.score : 0
             isPass = isPassedCalculation
           } else if (context.mode === ModeEnum.questionnaire) {
@@ -184,6 +183,22 @@ export const MultipleComponent = (props: MultipleProps) => {
     })
     props.updateSection({ ...props, options: newOptions })
   }, [props])
+
+  const passedClass = useMemo(() => {
+    if (context.mode === ModeEnum.test)
+      return props.isPass ? 'passed' : 'failed'
+
+    return ''
+  }, [context, props])
+  const answerClass = useMemo(
+    () => (option: MultipleProps['options'][number]) => {
+      if (context.mode === ModeEnum.test)
+        return (props.answer as string[])?.includes(option.key) ? 'answer' : ''
+
+      return ''
+    },
+    [context, props]
+  )
 
   const renderOptionsEditing = () => {
     return props.options.map((option, index) => {
@@ -252,12 +267,12 @@ export const MultipleComponent = (props: MultipleProps) => {
       return (
         <StyledOption key={option.key}>
           <Checkbox disabled={true}>
-            <div className="option-content">
-              <span className="option-content-answer">
+            <div className='option-content'>
+              <span className='option-content-answer'>
                 {getOptionLabel(index)}
               </span>
               <span
-                className="option-content-label"
+                className='option-content-label'
                 dangerouslySetInnerHTML={{
                   __html: option.label.replace(/\n/g, '<br />')
                 }}
@@ -283,12 +298,12 @@ export const MultipleComponent = (props: MultipleProps) => {
               )
             }
           >
-            <div className="option-content">
-              <span className="option-content-answer">
+            <div className='option-content'>
+              <span className='option-content-answer'>
                 {getOptionLabel(index)}
               </span>
               <span
-                className="option-content-label"
+                className='option-content-label'
                 dangerouslySetInnerHTML={{
                   __html: option.label.replace(/\n/g, '<br />')
                 }}
@@ -299,77 +314,31 @@ export const MultipleComponent = (props: MultipleProps) => {
       )
     })
   }
-  const renderOptionsCorrect = () => {
+  const renderOptionsCorrectAndFinished = () => {
     return props.options.map((option, index) => {
-      let passedClass = ''
-      let answerClass = ''
-      if (props.isPass) {
-        if ((props.response as string[])?.includes(option.key)) {
-          passedClass = 'passed'
-        }
-      } else {
-        if ((props.response as string[])?.includes(option.key)) {
-          passedClass = 'failed'
-        }
-        if ((props.answer as string[])?.includes(option.key)) {
-          answerClass = 'answer'
-        }
-      }
       return (
         <StyledOption key={option.key}>
           <Checkbox
             disabled={props.role !== context.role}
             checked={(props.response as string[])?.includes(option.key)}
-            onChange={() =>
-              editOptions(
-                option.key,
-                'isChecked',
-                !(props.response as string[])?.includes(option.key)
-              )
-            }
+            onChange={() => {
+              if (context.status === StatusEnum.waiting_for_correct) {
+                editOptions(
+                  option.key,
+                  'isChecked',
+                  !(props.response as string[])?.includes(option.key)
+                )
+              }
+            }}
           >
-            <div className={`option-content ${answerClass} ${passedClass}`}>
-              <span className="option-content-answer">
+            <div
+              className={`option-content ${passedClass} ${answerClass(option)}`}
+            >
+              <span className={'option-content-answer'}>
                 {getOptionLabel(index)}
               </span>
               <span
-                className="option-content-label"
-                dangerouslySetInnerHTML={{
-                  __html: option.label.replace(/\n/g, '<br />')
-                }}
-              />
-            </div>
-          </Checkbox>
-        </StyledOption>
-      )
-    })
-  }
-  const renderOptionsFinished = () => {
-    return props.options.map((option, index) => {
-      let statusClass = ''
-      if (props.isPass) {
-        if ((props.response as string[])?.includes(option.key)) {
-          statusClass = 'passed'
-        }
-      } else {
-        if ((props.response as string[])?.includes(option.key)) {
-          statusClass = 'failed'
-        } else if ((props.answer as string[])?.includes(option.key)) {
-          statusClass = 'answer'
-        }
-      }
-      return (
-        <StyledOption key={option.key}>
-          <Checkbox
-            disabled={true}
-            checked={(props.response as string[])?.includes(option.key)}
-          >
-            <div className={`option-content ${statusClass}`}>
-              <span className="option-content-answer">
-                {getOptionLabel(index)}
-              </span>
-              <span
-                className="option-content-label"
+                className='option-content-label'
                 dangerouslySetInnerHTML={{
                   __html: option.label.replace(/\n/g, '<br />')
                 }}
@@ -385,8 +354,8 @@ export const MultipleComponent = (props: MultipleProps) => {
     [StatusEnum.editing]: renderOptionsEditing,
     [StatusEnum.preview_editing]: renderOptionsPreviewEditing,
     [StatusEnum.waiting_for_response]: renderOptionsResponse,
-    [StatusEnum.waiting_for_correct]: renderOptionsCorrect,
-    [StatusEnum.finished]: renderOptionsFinished
+    [StatusEnum.waiting_for_correct]: renderOptionsCorrectAndFinished,
+    [StatusEnum.finished]: renderOptionsCorrectAndFinished
   } as const
   return (
     <>
