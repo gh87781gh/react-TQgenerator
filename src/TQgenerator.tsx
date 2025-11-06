@@ -35,7 +35,6 @@ import { initRating } from './lib/rating'
 import { SortableItem } from './SortableSection'
 import { SectionContent } from './SortableSection'
 import { autoCorrectQuestionnaire, autoCorrectTest } from './autoCorrect'
-// import { autoCorrectTest } from './autoCorrect'
 
 const StyledTQgenerator = styled.div`
   width: 100%;
@@ -90,11 +89,11 @@ const StyledTQgenerator = styled.div`
         margin-right: 1rem;
       }
     }
-      
+
     > .section-title-actions {
-        display: flex;
-        align-items: center;
-        margin-left: auto;
+      display: flex;
+      align-items: center;
+      margin-left: auto;
     }
 
     .section-title-status {

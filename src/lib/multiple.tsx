@@ -184,12 +184,19 @@ export const MultipleComponent = (props: MultipleProps) => {
     props.updateSection({ ...props, options: newOptions })
   }, [props])
 
-  const passedClass = useMemo(() => {
-    if (context.mode === ModeEnum.test)
-      return props.isPass ? 'passed' : 'failed'
+  const passedClass = useMemo(
+    () => (option: MultipleProps['options'][number]) => {
+      if (context.mode === ModeEnum.test) {
+        const theme = props.isPass ? 'passed' : 'failed'
+        if ((props.response as string[])?.includes(option.key)) {
+          return theme
+        } else return ''
+      }
 
-    return ''
-  }, [context, props])
+      return ''
+    },
+    [context, props]
+  )
   const answerClass = useMemo(
     () => (option: MultipleProps['options'][number]) => {
       if (context.mode === ModeEnum.test)
@@ -335,7 +342,9 @@ export const MultipleComponent = (props: MultipleProps) => {
             }}
           >
             <div
-              className={`option-content ${passedClass} ${answerClass(option)}`}
+              className={`option-content ${passedClass(option)} ${answerClass(
+                option
+              )}`}
             >
               <span className={'option-content-answer'}>
                 {getOptionLabel(index)}

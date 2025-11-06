@@ -38,24 +38,20 @@ const StyledOption = styled.div`
     margin-right: var(--gap-normal);
   }
 
-  span {
+  .option-content {
+    display: flex;
+    align-items: baseline;
+
     &.answer {
       font-weight: 800;
       color: var(--color-black);
     }
     &.passed {
-      font-weight: 400;
-      color: var(--color-success);
+      color: var(--color-success) !important;
     }
     &.failed {
-      font-weight: 400;
-      color: var(--color-danger);
+      color: var(--color-danger) !important;
     }
-  }
-
-  .option-content {
-    display: flex;
-    align-items: baseline;
   }
 
   .option-content-answer {
@@ -167,12 +163,17 @@ export const SingleComponent = (props: SingleProps) => {
     props.updateSection({ ...props, options: newOptions })
   }, [props])
 
-  const passedClass = useMemo(() => {
-    if (context.mode === ModeEnum.test)
-      return props.isPass ? 'passed' : 'failed'
-
-    return ''
-  }, [context, props])
+  const passedClass = useMemo(
+    () => (option: SingleProps['options'][number]) => {
+      if (context.mode === ModeEnum.test) {
+        const theme = props.isPass ? 'passed' : 'failed'
+        if (props.response === option.key) {
+          return theme
+        } else return ''
+      }
+    },
+    [context, props]
+  )
   const answerClass = useMemo(
     () => (option: SingleProps['options'][number]) => {
       if (context.mode === ModeEnum.test)
@@ -300,7 +301,9 @@ export const SingleComponent = (props: SingleProps) => {
             }}
           >
             <div
-              className={`option-content ${passedClass} ${answerClass(option)}`}
+              className={`option-content ${passedClass(option)} ${answerClass(
+                option
+              )}`}
             >
               <span className='option-content-answer'>
                 {getOptionLabel(index)}
