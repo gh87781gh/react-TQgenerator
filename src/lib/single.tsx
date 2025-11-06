@@ -104,7 +104,7 @@ export const SingleComponent = (props: SingleProps) => {
       key: 'label' | 'isChecked' | 'optionScore',
       value?: string | boolean | number
     ) => {
-      let { answer, response, options, finalScore } = props
+      let { answer, response, options, finalScore, isPass } = props
 
       if (key === 'isChecked') {
         if (context.status === StatusEnum.editing) {
@@ -118,14 +118,20 @@ export const SingleComponent = (props: SingleProps) => {
         ) {
           response = optionKey
           if (context.mode === ModeEnum.test) {
-            finalScore = response === answer ? props.score : 0
+            if (response === answer) {
+              finalScore = props.score
+              isPass = true
+            } else {
+              finalScore = 0
+              isPass = false
+            }
           } else if (context.mode === ModeEnum.questionnaire) {
             finalScore =
               options.find((option) => option.key === optionKey)?.optionScore ||
               0
           }
         }
-        props.updateSection({ ...props, answer, response, finalScore })
+        props.updateSection({ ...props, answer, response, finalScore, isPass })
       }
 
       if (key === 'label' || key === 'optionScore') {
@@ -275,13 +281,13 @@ export const SingleComponent = (props: SingleProps) => {
         }
       }
       return (
-        <StyledOption className={statusClass} key={option.key}>
+        <StyledOption key={option.key}>
           <Radio
             disabled={props.role !== context.role}
             checked={option.key === props.response}
             onChange={() => editOptions(option.key, 'isChecked')}
           >
-            <div className="option-content">
+            <div className={`option-content ${statusClass}`}>
               <span className="option-content-answer">
                 {getOptionLabel(index)}
               </span>
@@ -312,9 +318,9 @@ export const SingleComponent = (props: SingleProps) => {
         }
       }
       return (
-        <StyledOption className={statusClass} key={option.key}>
+        <StyledOption key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
-            <div className="option-content">
+            <div className={`option-content ${statusClass}`}>
               <span className="option-content-answer">
                 {getOptionLabel(index)}
               </span>
