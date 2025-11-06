@@ -217,6 +217,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   const { formItems, btnItems, modal: Modal } = components
   const { Select, SearchSelect, Textarea } = formItems
   const { BtnPrimary, BtnOutline, BtnGroup } = btnItems
+  const [isShowJsonEditor, setIsShowJsonEditor] = useState(false)
 
   const [type, setType] = useState<TypeKeysEnum>(
     mode === ModeEnum.test
@@ -335,6 +336,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
   }, [actions, status])
   const renderActionEditing = useCallback(() => {
     return (
+      isShowJsonEditor ? null : (
       <div className='section-body-add'>
         <Select
           allowClear={false}
@@ -345,9 +347,9 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           }}
         />
         <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
-      </div>
+      </div>)
     )
-  }, [type, status, addSection])
+  }, [type, status, addSection, isShowJsonEditor])
   const [isShowSelectReviewer, setIsShowSelectReviewer] = useState(false)
   const [selectedReviewerID, setSelectedReviewerID] = useState<string | null>(
     assets?.classTeacherID ?? null
@@ -506,7 +508,6 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     return true
   }, [config, status])
 
-  const [isShowJsonEditor, setIsShowJsonEditor] = useState(false)
   const renderActionJsonEditor = useCallback(() => {
     return (
       status === StatusEnum.editing &&
@@ -515,7 +516,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         <BtnOutline onClick={() => setIsShowJsonEditor(false)}>UI 編輯模式</BtnOutline>
       </BtnGroup>)
     )
-  }, [isShowJsonEditor])
+  }, [status])
 
   return (
     <MyContext.Provider
@@ -580,16 +581,14 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
           </DndContext>
         )}
         { isShowJsonEditor && (
-           <div>
              <Textarea
-               style={{ width: '100%', height: '300px', fontFamily: 'monospace', fontSize: '1em' }}
+               style={{ width: '100%', height: '300px', fontSize: '1em' }}
                value={JSON.stringify(props.sections, null, 2)}
                autoSize={ true }
                onChange={(e:any) => {
                  setSections?.(JSON.parse(e.target.value))
                }}
              />
-           </div>
          )}
         <div
           style={{
@@ -600,9 +599,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
             alignItems: 'center'
           }}
         >
-          {status === StatusEnum.editing
-            ? (!isShowJsonEditor ? renderAction[status as keyof typeof renderAction]?.() : null)
-            : renderAction[status as keyof typeof renderAction]?.()}
+          {renderAction[status as keyof typeof renderAction]?.()}
         </div>
 
         <div className='version'>v{packageJson.version}</div>
