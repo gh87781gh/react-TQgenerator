@@ -411,7 +411,8 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               onClick={() =>
                 actions?.onSubmitCorrect?.(
                   finalTotalScore,
-                  assets?.ReviewResultMap?.評核為不通過 ?? null
+                  assets?.ReviewResultMap?.評核為不通過 ?? null,
+                  config?.isReCorrecting ?? false
                 )
               }
             >
@@ -421,7 +422,8 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
               onClick={() =>
                 actions?.onSubmitCorrect?.(
                   finalTotalScore,
-                  assets?.ReviewResultMap?.評核為通過 ?? null
+                  assets?.ReviewResultMap?.評核為通過 ?? null,
+                  config?.isReCorrecting ?? false
                 )
               }
             >
@@ -432,7 +434,11 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         {config?.isShowCorrectActionSubmit ? (
           <BtnPrimary
             onClick={() => {
-              actions?.onSubmitCorrect?.(finalTotalScore, null)
+              actions?.onSubmitCorrect?.(
+                finalTotalScore,
+                null,
+                config?.isReCorrecting ?? false
+              )
             }}
           >
             {!config?.isReCorrecting
