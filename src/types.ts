@@ -145,6 +145,7 @@ export type TQgeneratorProps = {
   setSections: (sections: SectionProps<TypeKeysEnum>[]) => void
   renderSectionBodyFooter?: () => React.ReactNode
   permissions: PermissionEnum[]
+  replyRoleMap?: { key: string, value: string }[] // 由對接系統傳入的作答者設定，供 design 時選擇作答者用
 
   components: {
     formItems: {

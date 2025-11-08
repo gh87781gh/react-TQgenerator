@@ -64,3 +64,11 @@
   --z-index-sub-page-bottom-mask: 1005;
   --z-index-sub-page: 1006;
 }
+
+.clearfix {
+  &:after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+}

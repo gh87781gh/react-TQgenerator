@@ -6,7 +6,7 @@ import {
   TypeKeysEnum,
   ModeEnum,
   StatusEnum,
-  RoleEnum
+  PermissionEnum
 } from './types'
 import { MyContext } from './TQgenerator'
 import { TrueFalseComponent } from './lib/true-false'
@@ -77,13 +77,61 @@ const SectionContent: React.FC<SectionContentProps> = ({
   const { icons } = utility
   const { IconDrag, IconDeleteOutline } = icons
   const { formItems, btnItems, editor } = components
-  const {
-    InputNumber,
-    Radio
-    // Textarea
-  } = formItems
+  const { InputNumber, Radio } = formItems
   const { BtnGroup, BtnText } = btnItems
   const { component: Editor, onUploadImage } = editor
+
+  const renderSectionTitleScore = () => {
+    if (context.mode !== ModeEnum.test) return null
+
+    if (context.status === StatusEnum.設計中) {
+      return (
+        <>
+          得分 :
+          <InputNumber
+            style={{ width: '100px', marginLeft: '1rem' }}
+            value={section.score}
+            precision={1}
+            min={0}
+            step={0.1}
+            onChange={(value: any) =>
+              editSection(section.id!, { score: Number(value) || 0 })
+            }
+          />
+        </>
+      )
+    } else if (context.status === StatusEnum.唯讀 && section.score !== null) {
+      // TOCHECK 要確認可以看到得分呈現的判斷條件
+      return <span>得分 :{section.score}</span>
+    } else return null
+  }
+  const renderSectionQuestion = () => {
+    if (context.status === StatusEnum.設計中) {
+      return (
+        <div className='section-body-question active'>
+          <div className='section-body-question-editor'>
+            <Editor
+              id={section.id}
+              value={section.question}
+              onChange={(content: string) => {
+                editSection(section.id!, { question: content })
+              }}
+              onUploadImage={onUploadImage}
+            />
+          </div>
+        </div>
+      )
+    } else {
+      return (
+        <div
+          className={`section-body-question ${!section.question && 'empty'}`}
+          dangerouslySetInnerHTML={{
+            __html: section.question.replace(/\n/g, '<br />')
+          }}
+        />
+      )
+    }
+  }
 
   return (
     <div
@@ -91,16 +139,14 @@ const SectionContent: React.FC<SectionContentProps> = ({
       tabIndex={0}
     >
       <div className='section-title'>
-        {context.status === StatusEnum.editing && (
+        {context.status === StatusEnum.設計中 && (
           <div className='section-title-drag' {...dragHandleProps}>
             <IconDrag />
           </div>
         )}
         {context.mode === ModeEnum.test &&
-          (context.status === StatusEnum.waiting_for_correct ||
-            context.status === StatusEnum.finished) &&
           section.isPass !== null &&
-          context.config?.isAllowReview && (
+          context.permissions.includes(PermissionEnum.查看結果) && (
             <span>
               <em
                 className={`section-title-status ${
@@ -113,56 +159,30 @@ const SectionContent: React.FC<SectionContentProps> = ({
           )}
         <span>題目 {index + 1}</span>
         <span>{section.type}</span>
-        {context.mode === ModeEnum.test &&
-          context.status === StatusEnum.editing && (
-            <>
-              得分 :
-              <InputNumber
-                style={{ width: '100px', marginLeft: '1rem' }}
-                value={section.score}
-                precision={1}
-                min={0}
-                step={0.1}
-                onChange={(value: any) =>
-                  editSection(section.id || '', { score: Number(value) || 0 })
-                }
-              />
-            </>
-          )}
-        {context.mode === ModeEnum.test &&
-          (context.status === StatusEnum.waiting_for_correct ||
-            context.status === StatusEnum.finished) && (
-            <span>得分 :{section.score !== null ? section.score : ''}</span>
-          )}
-        <div className={'section-title-actions'}>
-          {context.status === StatusEnum.editing &&
-            context.mode === ModeEnum.questionnaire && (
-              <BtnGroup className='clearfix' style={{ float: 'right' }}>
-                <Radio
-                  key='actor'
-                  checked={section.role === RoleEnum.actor}
-                  onChange={() =>
-                    editSection(section.id || '', { role: RoleEnum.actor })
-                  }
-                >
-                  填寫者
-                </Radio>
-                <Radio
-                  key='reviewer'
-                  checked={section.role === RoleEnum.reviewer}
-                  onChange={() =>
-                    editSection(section.id || '', { role: RoleEnum.reviewer })
-                  }
-                >
-                  評核者
-                </Radio>
+        {renderSectionTitleScore()}
+        <div className='section-title-actions clearfix'>
+          {context.mode === ModeEnum.questionnaire &&
+            context.status === StatusEnum.設計中 &&
+            Array.isArray(context.replyRoleMap) && (
+              <BtnGroup style={{ float: 'right' }}>
+                {context.replyRoleMap.map((role) => (
+                  <Radio
+                    key={role.key}
+                    checked={section.role === role.key}
+                    onChange={() =>
+                      editSection(section.id!, { role: role.key })
+                    }
+                  >
+                    {role.value}
+                  </Radio>
+                ))}
               </BtnGroup>
             )}
-          {context.status === StatusEnum.editing && (
+          {context.status === StatusEnum.設計中 && (
             <BtnText
               key='delete'
               theme='danger'
-              onClick={() => deleteSection(section.id || '')}
+              onClick={() => deleteSection(section.id!)}
             >
               <IconDeleteOutline />
             </BtnText>
@@ -170,60 +190,13 @@ const SectionContent: React.FC<SectionContentProps> = ({
         </div>
       </div>
       <div className='section-body'>
-        {context.status === StatusEnum.editing ? (
-          <div className='section-body-question active'>
-            {/* <Textarea
-              value={section.question}
-              onChange={(e: any) =>
-                editSection(section.id || '', { question: e.target.value })
-              }
-            /> */}
-
-            {/* TODO */}
-            {/* <Editor /> */}
-            <div
-              style={{
-                width: '100%',
-                height: '400px',
-                overflowY: 'auto',
-                border: '1px solid rgb(217,217,217)'
-              }}
-            >
-              <Editor
-                id={section.id}
-                value={section.question}
-                onChange={(content: string) => {
-                  editSection(section.id || '', { question: content })
-                }}
-                onUploadImage={onUploadImage}
-                // title=''
-                // height={200}
-                // value={section.question}
-                // onSave={(
-                //   content: string
-                //   // setIsLoading: (value: boolean) => void,
-                //   // contentH: number | null
-                // ) => {
-                //   editSection(section.id || '', { question: content })
-                // }}
-                // onUploadImage={onUploadImage}
-              />
-            </div>
-          </div>
-        ) : (
-          <div
-            className={`section-body-question ${!section.question && 'empty'}`}
-            dangerouslySetInnerHTML={{
-              __html: section.question.replace(/\n/g, '<br />')
-            }}
-          />
-        )}
+        {renderSectionQuestion()}
         <div className='section-body-question-option'>
           {section.type === TypeKeysEnum.是非題 && (
             <TrueFalseComponent
               {...section}
               updateSection={(data: SectionProps<TypeKeysEnum>) =>
-                editSection(section.id || '', data)
+                editSection(section.id!, data)
               }
             />
           )}
@@ -231,7 +204,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
             <SingleComponent
               {...section}
               updateSection={(data: SectionProps<TypeKeysEnum>) =>
-                editSection(section.id || '', data)
+                editSection(section.id!, data)
               }
             />
           )}
@@ -239,7 +212,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
             <MultipleComponent
               {...section}
               updateSection={(data: SectionProps<TypeKeysEnum>) =>
-                editSection(section.id || '', data)
+                editSection(section.id!, data)
               }
             />
           )}
@@ -247,7 +220,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
             <FieldComponent
               {...section}
               updateSection={(data: SectionProps<TypeKeysEnum>) =>
-                editSection(section.id || '', data)
+                editSection(section.id!, data)
               }
             />
           )}
@@ -255,7 +228,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
             <EssayComponent
               {...section}
               updateSection={(data: SectionProps<TypeKeysEnum>) =>
-                editSection(section.id || '', data)
+                editSection(section.id!, data)
               }
             />
           )}
@@ -263,7 +236,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
             <RatingComponent
               {...section}
               updateSection={(data: SectionProps<TypeKeysEnum>) =>
-                editSection(section.id || '', data)
+                editSection(section.id!, data)
               }
             />
           )}

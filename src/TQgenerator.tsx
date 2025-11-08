@@ -142,9 +142,17 @@ const StyledTQgenerator = styled.div`
       border-radius: 0.5rem;
     }
 
+    // TODO 要增加空題報錯的樣式
     &.empty {
       background-color: var(--color-danger-light);
     }
+  }
+
+  .section-body-question-editor {
+    width: 100%;
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border-base);
   }
 
   .section-body-question-option {
@@ -202,12 +210,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     }
   }
 
-  const {
-    formItems,
-    btnItems,
-    modal: Modal,
-    message: Message
-  } = props.components
+  const { formItems, btnItems } = props.components
   const { Select } = formItems
   const { BtnPrimary } = btnItems
 
@@ -273,7 +276,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     data: Partial<SectionProps<TypeKeysEnum>>
   ) => {
     if (!id) {
-      console.error('Edit section id is required')
+      console.error('🔴 Edit section: id is required')
       return
     }
 
@@ -352,6 +355,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         setSections: props.setSections,
         renderSectionBodyFooter: props.renderSectionBodyFooter,
         permissions: props.permissions,
+        replyRoleMap: props.replyRoleMap,
         components: props.components,
         utility: props.utility
       }}
