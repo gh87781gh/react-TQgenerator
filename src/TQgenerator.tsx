@@ -347,7 +347,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       value={{
         mode: props.mode,
         status: props.status,
-        userRole: props.userRole,
+        role: props.role,
         sections: props.sections,
         setSections: props.setSections,
         renderSectionBodyFooter: props.renderSectionBodyFooter,

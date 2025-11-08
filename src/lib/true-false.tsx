@@ -1,7 +1,14 @@
-import { useContext, useCallback, useMemo } from 'react'
-import { TrueFalseProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
-import { MyContext } from '../TQgenerator'
+import { useContext } from 'react'
 import styled from 'styled-components'
+
+import {
+  TrueFalseProps,
+  TypeKeysEnum,
+  ModeEnum,
+  StatusEnum,
+  PermissionEnum
+} from '../types'
+import { MyContext } from '../TQgenerator'
 
 const StyledEditingOption = styled.div`
   display: flex;
@@ -29,24 +36,22 @@ const StyledOption = styled.div`
     margin-right: var(--gap-normal);
   }
 
-  span {
-    &.answer {
-      font-weight: 800;
-      color: var(--color-black);
-    }
-    &.passed {
-      font-weight: 400;
-      color: var(--color-success);
-    }
-    &.failed {
-      font-weight: 400;
-      color: var(--color-danger);
-    }
-  }
-
   .option-content {
     display: flex;
     align-items: baseline;
+
+    &.answer {
+      font-weight: 800;
+      color: var(--color-black) !important;
+    }
+    &.passed {
+      font-weight: 400;
+      color: var(--color-success) !important;
+    }
+    &.failed {
+      font-weight: 400;
+      color: var(--color-danger) !important;
+    }
   }
   .option-content-answer {
     min-width: 1em;
@@ -89,7 +94,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
   const { formItems } = components
   const { Label, Radio, Textarea } = formItems
 
-  const onChangeOptionsChecked = (optionKey: string) => {
+  const onChangeOptionChecked = (optionKey: string) => {
     let { answer, response } = props
     if (context.status === StatusEnum.設計中) {
       answer = optionKey
@@ -99,7 +104,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
     }
     props.updateSection({ ...props, answer, response })
   }
-  const onEditOptionsLabel = (optionKey: string, value: string) => {
+  const onChangeOptionLabel = (optionKey: string, value: string) => {
     const options = props.options.map((option) => {
       let label = option.label
       if (option.key === optionKey) {
@@ -110,48 +115,26 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
     props.updateSection({ ...props, options })
   }
 
-  const onAutoCorrect = () => {
-    if (context.mode === ModeEnum.test) {
-      let { answer, response, finalScore, isPass } = props
-      if (response === answer) {
-        finalScore = props.score
-        isPass = true
-      } else {
-        finalScore = 0
-        isPass = false
-      }
-      props.updateSection({ ...props, finalScore, isPass })
+  const getPassedClass = (option: TrueFalseProps['options'][number]) => {
+    if (
+      context.permissions.includes(PermissionEnum.查看結果) &&
+      props.response === option.key
+    ) {
+      return props.isPass ? 'passed' : 'failed'
     }
+    return ''
+  }
+  const getAnswerClass = (option: TrueFalseProps['options'][number]) => {
+    if (
+      context.permissions.includes(PermissionEnum.查看答案) &&
+      props.answer === option.key
+    ) {
+      return 'answer'
+    }
+    return ''
   }
 
-  const passedClass = useMemo(
-    () => (option: TrueFalseProps['options'][number]) => {
-      if (
-        context.mode === ModeEnum.test &&
-        context.config?.isAllowReviewWithAnswer
-      ) {
-        if (props.response === option.key) {
-          return props.isPass ? 'passed' : 'failed'
-        }
-      }
-      return ''
-    },
-    [context, props]
-  )
-  const answerClass = useMemo(
-    () => (option: TrueFalseProps['options'][number]) => {
-      if (
-        context.mode === ModeEnum.test &&
-        context.config?.isAllowReviewWithAnswer
-      )
-        return props.answer === option.key ? 'answer' : ''
-
-      return ''
-    },
-    [context, props]
-  )
-
-  const renderOptionsEditing = () => {
+  const renderOptionsDesign = () => {
     return props.options.map((option, index) => {
       return (
         <StyledEditingOption key={option.key}>
@@ -159,7 +142,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
           <Textarea
             value={option.label}
             onChange={(e: any) =>
-              onEditOptionsLabel(option.key, e.target.value)
+              onChangeOptionLabel(option.key, e.target.value)
             }
             autoSize={{ minRows: 1, maxRows: 4 }}
           />
@@ -167,7 +150,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
             <div style={{ width: '200px' }}>
               <Radio
                 checked={option.key === props.answer}
-                onChange={() => onChangeOptionsChecked(option.key)}
+                onChange={() => onChangeOptionChecked(option.key)}
               >
                 正確答案
               </Radio>
@@ -177,12 +160,45 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
       )
     })
   }
-  const renderOptionsPreviewEditing = () => {
+  const renderOptionsReply = () => {
+    return props.options.map((option, index) => {
+      return (
+        <StyledOption key={option.key}>
+          <Radio
+            disabled={context.role !== props.role}
+            checked={option.key === props.response}
+            onChange={() => onChangeOptionChecked(option.key)}
+          >
+            <div
+              className={`option-content 
+                ${getPassedClass(option)} 
+                ${getAnswerClass(option)}`}
+            >
+              <span className='option-content-answer'>
+                {answerOptions[index]}
+              </span>
+              <span
+                className='option-content-label'
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
+          </Radio>
+        </StyledOption>
+      )
+    })
+  }
+  const renderOptionsRead = () => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
-            <div className='option-content'>
+            <div
+              className={`option-content 
+                ${getPassedClass(option)} 
+                ${getAnswerClass(option)}`}
+            >
               <span className='option-content-answer'>
                 {answerOptions[index]}
               </span>
@@ -193,65 +209,6 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
                 }}
               />
             </div>
-          </Radio>
-        </StyledOption>
-      )
-    })
-  }
-  const renderOptionsResponse = () => {
-    return props.options.map((option, index) => {
-      return (
-        <StyledOption key={option.key}>
-          <Radio
-            disabled={props.role !== context.role}
-            checked={option.key === props.response}
-            onChange={() => onChangeOptionsChecked(option.key)}
-          >
-            <div className='option-content'>
-              <span className='option-content-answer'>
-                {answerOptions[index]}
-              </span>
-              <span
-                className='option-content-label'
-                dangerouslySetInnerHTML={{
-                  __html: option.label.replace(/\n/g, '<br />')
-                }}
-              />
-            </div>
-          </Radio>
-        </StyledOption>
-      )
-    })
-  }
-  const renderOptionsCorrectAndFinished = () => {
-    return props.options.map((option, index) => {
-      return (
-        <StyledOption key={option.key}>
-          <Radio
-            disabled={
-              props.role !== context.role ||
-              context.status === StatusEnum.finished
-            }
-            checked={option.key === props.response}
-            onChange={() => {
-              if (context.status === StatusEnum.waiting_for_correct) {
-                onChangeOptionsChecked(option.key)
-              }
-            }}
-          >
-            <span className={`${passedClass(option)} ${answerClass(option)}`}>
-              <div className='option-content'>
-                <span className='option-content-answer'>
-                  {answerOptions[index]}
-                </span>
-                <span
-                  className='option-content-label'
-                  dangerouslySetInnerHTML={{
-                    __html: option.label.replace(/\n/g, '<br />')
-                  }}
-                />
-              </div>
-            </span>
           </Radio>
         </StyledOption>
       )
@@ -259,11 +216,9 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
   }
 
   const renderOptions = {
-    [StatusEnum.editing]: renderOptionsEditing,
-    [StatusEnum.preview_editing]: renderOptionsPreviewEditing,
-    [StatusEnum.waiting_for_response]: renderOptionsResponse,
-    [StatusEnum.waiting_for_correct]: renderOptionsCorrectAndFinished,
-    [StatusEnum.finished]: renderOptionsCorrectAndFinished
+    [StatusEnum.設計中]: renderOptionsDesign,
+    [StatusEnum.作答中]: renderOptionsReply,
+    [StatusEnum.唯讀]: renderOptionsRead
   } as const
   return (
     <>

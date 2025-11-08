@@ -1,8 +1,17 @@
-import { useContext, useCallback, useMemo } from 'react'
-import { SingleProps, TypeKeysEnum, ModeEnum, StatusEnum } from '../types'
+import { useContext } from 'react'
+import styled from 'styled-components'
+import _ from 'lodash'
+import { v4 as uuid } from 'uuid'
+
+import {
+  SingleProps,
+  TypeKeysEnum,
+  ModeEnum,
+  StatusEnum,
+  PermissionEnum
+} from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils/getIndex2Letter'
-import styled from 'styled-components'
 
 const StyledEditingOption = styled.div`
   display: flex;
@@ -24,6 +33,12 @@ const StyledEditingOption = styled.div`
     flex-wrap: no-wrap;
     justify-content: flex-end;
   }
+
+  .option-result-score {
+    width: 100px;
+    text-align: right;
+    margin-right: var(--gap-normal);
+  }
 `
 const StyledOption = styled.div`
   display: flex;
@@ -44,12 +59,14 @@ const StyledOption = styled.div`
 
     &.answer {
       font-weight: 800;
-      color: var(--color-black);
+      color: var(--color-black) !important;
     }
     &.passed {
+      font-weight: 400;
       color: var(--color-success) !important;
     }
     &.failed {
+      font-weight: 400;
       color: var(--color-danger) !important;
     }
   }
@@ -94,103 +111,72 @@ export const SingleComponent = (props: SingleProps) => {
   const { Label, Radio, InputNumber, Textarea } = formItems
   const { BtnOutline, BtnText } = btnItems
 
-  const editOptions = useCallback(
-    (
-      optionKey: string,
-      key: 'label' | 'isChecked' | 'optionScore',
-      value?: string | boolean | number
-    ) => {
-      let { answer, response, options, finalScore, isPass } = props
-
-      if (key === 'isChecked') {
-        if (context.status === StatusEnum.editing) {
-          answer = optionKey
-        }
-        if (
-          context.status === StatusEnum.waiting_for_response ||
-          context.status === StatusEnum.waiting_for_correct ||
-          (context.status === StatusEnum.finished &&
-            context.config?.isAllowReCorrect)
-        ) {
-          response = optionKey
-          if (context.mode === ModeEnum.test) {
-            if (response === answer) {
-              finalScore = props.score
-              isPass = true
-            } else {
-              finalScore = 0
-              isPass = false
-            }
-          } else if (context.mode === ModeEnum.questionnaire) {
-            finalScore =
-              options.find((option) => option.key === optionKey)?.optionScore ||
-              0
-          }
-        }
-        props.updateSection({ ...props, answer, response, finalScore, isPass })
+  const onChangeOptionChecked = (optionKey: string) => {
+    let { answer, response } = props
+    if (context.status === StatusEnum.設計中) {
+      answer = optionKey
+    }
+    if (context.status === StatusEnum.作答中) {
+      response = optionKey
+    }
+    props.updateSection({ ...props, answer, response })
+  }
+  const onChangeOptionLabel = (optionKey: string, value: string) => {
+    const options = props.options.map((option) => {
+      let label = option.label
+      if (option.key === optionKey) {
+        label = value
       }
-
-      if (key === 'label' || key === 'optionScore') {
-        const newOptions = options.map((option) => {
-          if (option.key === optionKey) {
-            return { ...option, [key]: value }
-          }
-          return option
-        })
-        props.updateSection({ ...props, options: newOptions })
+      return { ...option, label }
+    })
+    props.updateSection({ ...props, options })
+  }
+  const onChangeOptionScore = (optionKey: string, value: number) => {
+    const options = props.options.map((option) => {
+      if (option.key === optionKey) {
+        return { ...option, optionScore: value }
       }
-    },
-    [props, context]
-  )
-  const deleteOption = useCallback(
-    (key: string) => {
-      const { options } = props
-      const newOptions = options.filter((option) => option.key !== key)
-      props.updateSection({ ...props, options: newOptions })
-    },
-    [props]
-  )
-  const addOption = useCallback(() => {
-    const { options } = props
-    const newOptions = [...options]
-    const key = new Date().getTime().toString()
-    newOptions.push({
+      return option
+    })
+    props.updateSection({ ...props, options })
+  }
+
+  const onDeleteOption = (key: string) => {
+    const newOptions = props.options.filter((option) => option.key !== key)
+    props.updateSection({ ...props, options: newOptions })
+  }
+  const onAddOption = () => {
+    const options = _.cloneDeep(props.options)
+    const key = uuid()
+    options.push({
       key,
       label: '',
       value: key,
       optionScore: 0
     })
-    props.updateSection({ ...props, options: newOptions })
-  }, [props])
+    props.updateSection({ ...props, options })
+  }
 
-  const passedClass = useMemo(
-    () => (option: SingleProps['options'][number]) => {
-      if (
-        context.mode === ModeEnum.test &&
-        context.config?.isAllowReviewWithAnswer
-      ) {
-        if (props.response === option.key) {
-          return props.isPass ? 'passed' : 'failed'
-        }
-      }
-      return ''
-    },
-    [context, props]
-  )
-  const answerClass = useMemo(
-    () => (option: SingleProps['options'][number]) => {
-      if (
-        context.mode === ModeEnum.test &&
-        context.config?.isAllowReviewWithAnswer
-      )
-        return props.answer === option.key ? 'answer' : ''
+  const getPassedClass = (option: SingleProps['options'][number]) => {
+    if (
+      context.permissions.includes(PermissionEnum.查看結果) &&
+      props.response === option.key
+    ) {
+      return props.isPass ? 'passed' : 'failed'
+    }
+    return ''
+  }
+  const getAnswerClass = (option: SingleProps['options'][number]) => {
+    if (
+      context.permissions.includes(PermissionEnum.查看答案) &&
+      props.answer === option.key
+    ) {
+      return 'answer'
+    }
+    return ''
+  }
 
-      return ''
-    },
-    [context, props]
-  )
-
-  const renderOptionsEditing = () => {
+  const renderOptionsDesign = () => {
     return props.options.map((option, index) => {
       return (
         <StyledEditingOption key={option.key}>
@@ -198,7 +184,7 @@ export const SingleComponent = (props: SingleProps) => {
           <Textarea
             value={option.label}
             onChange={(e: any) =>
-              editOptions(option.key, 'label', e.target.value)
+              onChangeOptionLabel(option.key, e.target.value)
             }
             autoSize={{ minRows: 1, maxRows: 4 }}
           />
@@ -206,28 +192,20 @@ export const SingleComponent = (props: SingleProps) => {
             {props.mode === ModeEnum.test && (
               <Radio
                 checked={option.key === props.answer}
-                onChange={() => editOptions(option.key, 'isChecked')}
+                onChange={() => onChangeOptionChecked(option.key)}
               >
                 正確答案
               </Radio>
             )}
             {props.mode === ModeEnum.questionnaire && (
               <>
-                <div
-                  style={{
-                    width: '100px',
-                    textAlign: 'right',
-                    marginRight: 'var(--gap-normal)'
-                  }}
-                >
-                  分數
-                </div>
+                <div className='option-result-score'>分數</div>
                 <InputNumber
                   value={option.optionScore}
                   precision={0}
                   min={0}
-                  onChange={(value: any) =>
-                    editOptions(option.key, 'optionScore', Number(value) || 0)
+                  onChange={(value: number | null) =>
+                    onChangeOptionScore(option.key, value ?? 0)
                   }
                 />
               </>
@@ -235,7 +213,7 @@ export const SingleComponent = (props: SingleProps) => {
             <BtnText
               key='delete'
               theme='danger'
-              onClick={() => deleteOption(option.key)}
+              onClick={() => onDeleteOption(option.key)}
             >
               <icons.IconDeleteOutline />
             </BtnText>
@@ -244,72 +222,44 @@ export const SingleComponent = (props: SingleProps) => {
       )
     })
   }
-  const renderOptionsPreviewEditing = () => {
+  const renderOptionsReply = () => {
+    return props.options.map((option, index) => {
+      return (
+        <StyledOption key={option.key}>
+          <Radio
+            disabled={context.role !== props.role}
+            checked={option.key === props.response}
+            onChange={() => onChangeOptionChecked(option.key)}
+          >
+            <div
+              className={`option-content 
+                ${getPassedClass(option)} 
+                ${getAnswerClass(option)}`}
+            >
+              <span className='option-content-answer'>
+                {getOptionLabel(index)}
+              </span>
+              <span
+                className='option-content-label'
+                dangerouslySetInnerHTML={{
+                  __html: option.label.replace(/\n/g, '<br />')
+                }}
+              />
+            </div>
+          </Radio>
+        </StyledOption>
+      )
+    })
+  }
+  const renderOptionsRead = () => {
     return props.options.map((option, index) => {
       return (
         <StyledOption key={option.key}>
           <Radio disabled={true} checked={option.key === props.response}>
-            <div className='option-content'>
-              <span className='option-content-answer'>
-                {getOptionLabel(index)}
-              </span>
-              <span
-                className='option-content-label'
-                dangerouslySetInnerHTML={{
-                  __html: option.label.replace(/\n/g, '<br />')
-                }}
-              />
-            </div>
-          </Radio>
-        </StyledOption>
-      )
-    })
-  }
-  const renderOptionsResponse = () => {
-    return props.options.map((option, index) => {
-      return (
-        <StyledOption key={option.key}>
-          <Radio
-            disabled={props.role !== context.role}
-            checked={option.key === props.response}
-            onChange={() => editOptions(option.key, 'isChecked')}
-          >
-            <div className='option-content'>
-              <span className='option-content-answer'>
-                {getOptionLabel(index)}
-              </span>
-              <span
-                className='option-content-label'
-                dangerouslySetInnerHTML={{
-                  __html: option.label.replace(/\n/g, '<br />')
-                }}
-              />
-            </div>
-          </Radio>
-        </StyledOption>
-      )
-    })
-  }
-  const renderOptionsCorrectAndFinished = () => {
-    return props.options.map((option, index) => {
-      return (
-        <StyledOption key={option.key}>
-          <Radio
-            disabled={
-              props.role !== context.role ||
-              context.status === StatusEnum.finished
-            }
-            checked={option.key === props.response}
-            onChange={() => {
-              if (context.status === StatusEnum.waiting_for_correct) {
-                editOptions(option.key, 'isChecked')
-              }
-            }}
-          >
             <div
-              className={`option-content ${passedClass(option)} ${answerClass(
-                option
-              )}`}
+              className={`option-content 
+                ${getPassedClass(option)} 
+                ${getAnswerClass(option)}`}
             >
               <span className='option-content-answer'>
                 {getOptionLabel(index)}
@@ -328,18 +278,16 @@ export const SingleComponent = (props: SingleProps) => {
   }
 
   const renderOptions = {
-    [StatusEnum.editing]: renderOptionsEditing,
-    [StatusEnum.preview_editing]: renderOptionsPreviewEditing,
-    [StatusEnum.waiting_for_response]: renderOptionsResponse,
-    [StatusEnum.waiting_for_correct]: renderOptionsCorrectAndFinished,
-    [StatusEnum.finished]: renderOptionsCorrectAndFinished
+    [StatusEnum.設計中]: renderOptionsDesign,
+    [StatusEnum.作答中]: renderOptionsReply,
+    [StatusEnum.唯讀]: renderOptionsRead
   } as const
   return (
     <>
       <Label>選項</Label>
       {renderOptions[context.status as keyof typeof renderOptions]?.()}
-      {context.status === StatusEnum.editing && (
-        <BtnOutline size='small' onClick={() => addOption()}>
+      {context.status === StatusEnum.設計中 && (
+        <BtnOutline size='small' onClick={() => onAddOption()}>
           新增選項
         </BtnOutline>
       )}

@@ -45,7 +45,7 @@ export enum TypeKeysEnum {
 interface BaseSectionProps {
   id: string | null
   mode: ModeEnum | null
-  userRole: string | null // 進入者角色（取決於對接系統內有什麼角色）
+  role: string | null // 進入者角色（取決於對接系統內有什麼角色）
   updateSection: (section: SectionProps<TypeKeysEnum>) => void
   question: string // 問題
   answer: string | number | null | string[] | dayjs.Dayjs  // 解析
@@ -57,7 +57,7 @@ interface BaseSectionProps {
 export const initBaseSection: BaseSectionProps = {
   id: null,
   mode: null,
-  userRole: null,
+  role: null,
   updateSection: () => { },
   question: '',
   answer: null,
@@ -140,7 +140,7 @@ export type TQgeneratorProps = {
   isLoading: boolean
   mode: ModeEnum | null
   status: StatusEnum | null
-  userRole: string | null
+  role: string | null
   sections: SectionProps<TypeKeysEnum>[]
   setSections: (sections: SectionProps<TypeKeysEnum>[]) => void
   renderSectionBodyFooter?: () => React.ReactNode
