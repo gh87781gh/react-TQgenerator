@@ -12,73 +12,28 @@ import {
 } from '../types'
 import { MyContext } from '../TQgenerator'
 import { getOptionLabel } from '../utils/getIndex2Letter'
+import {
+  optionDesignStyle,
+  optionStyle,
+  optionContentStyle,
+  optionResultScoreStyle
+} from '../style/common'
 
-const StyledEditingOption = styled.div`
+const StyledDesignOption = styled.div`
+  ${optionDesignStyle}
+`
+const StyledOptionResult = styled.div`
+  width: 300px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: no-wrap;
+  justify-content: flex-end;
 
-  &:not(:last-child) {
-    margin-bottom: var(--gap-small);
-  }
-
-  > *:not(:last-child) {
-    margin-right: var(--gap-normal);
-  }
-
-  .option-result {
-    width: 300px;
-    display: flex;
-    align-items: center;
-    flex-wrap: no-wrap;
-    justify-content: flex-end;
-  }
-
-  .option-result-score {
-    width: 100px;
-    text-align: right;
-    margin-right: var(--gap-normal);
-  }
+  ${optionResultScoreStyle}
 `
 const StyledOption = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-
-  &:not(:last-child) {
-    margin-bottom: var(--gap-small);
-  }
-
-  > *:not(:last-child) {
-    margin-right: var(--gap-normal);
-  }
-
-  .option-content {
-    display: flex;
-    align-items: baseline;
-
-    &.answer {
-      font-weight: 800;
-      color: var(--color-black) !important;
-    }
-    &.passed {
-      font-weight: 400;
-      color: var(--color-success) !important;
-    }
-    &.failed {
-      font-weight: 400;
-      color: var(--color-danger) !important;
-    }
-  }
-
-  .option-content-answer {
-    min-width: 1em;
-    margin-right: 2px;
-  }
-
-  .option-content-label {
-    line-height: 1.3;
-  }
+  ${optionStyle}
+  ${optionContentStyle}
 `
 
 const getInitOptions: (id: string) => SingleProps['options'] = (id: string) => {
@@ -123,11 +78,9 @@ export const SingleComponent = (props: SingleProps) => {
   }
   const onChangeOptionLabel = (optionKey: string, value: string) => {
     const options = props.options.map((option) => {
-      let label = option.label
       if (option.key === optionKey) {
-        label = value
-      }
-      return { ...option, label }
+        return { ...option, label: value }
+      } else return option
     })
     props.updateSection({ ...props, options })
   }
@@ -135,15 +88,14 @@ export const SingleComponent = (props: SingleProps) => {
     const options = props.options.map((option) => {
       if (option.key === optionKey) {
         return { ...option, optionScore: value }
-      }
-      return option
+      } else return option
     })
     props.updateSection({ ...props, options })
   }
 
   const onDeleteOption = (key: string) => {
-    const newOptions = props.options.filter((option) => option.key !== key)
-    props.updateSection({ ...props, options: newOptions })
+    const options = props.options.filter((option) => option.key !== key)
+    props.updateSection({ ...props, options })
   }
   const onAddOption = () => {
     const options = _.cloneDeep(props.options)
@@ -179,7 +131,7 @@ export const SingleComponent = (props: SingleProps) => {
   const renderOptionsDesign = () => {
     return props.options.map((option, index) => {
       return (
-        <StyledEditingOption key={option.key}>
+        <StyledDesignOption key={option.key}>
           <div>{getOptionLabel(index)}</div>
           <Textarea
             value={option.label}
@@ -188,7 +140,7 @@ export const SingleComponent = (props: SingleProps) => {
             }
             autoSize={{ minRows: 1, maxRows: 4 }}
           />
-          <div className='option-result'>
+          <StyledOptionResult>
             {props.mode === ModeEnum.test && (
               <Radio
                 checked={option.key === props.answer}
@@ -217,8 +169,8 @@ export const SingleComponent = (props: SingleProps) => {
             >
               <icons.IconDeleteOutline />
             </BtnText>
-          </div>
-        </StyledEditingOption>
+          </StyledOptionResult>
+        </StyledDesignOption>
       )
     })
   }

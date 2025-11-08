@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react'
+import { useContext } from 'react'
 import styled from 'styled-components'
 import { RatingProps, TypeKeysEnum, StatusEnum } from '../types'
 import { MyContext } from '../TQgenerator'
@@ -42,7 +42,7 @@ export const RatingComponent = (props: RatingProps) => {
   const { formItems } = components
   const { Label, Radio, InputNumber } = formItems
 
-  const editRatingType = (value: RatingProps['ratingType']) => {
+  const onChangeRatingType = (value: RatingProps['ratingType']) => {
     props.updateSection({
       ...props,
       ratingType: value,
@@ -52,44 +52,38 @@ export const RatingComponent = (props: RatingProps) => {
       ratingGap: initRating.ratingGap
     })
   }
-  const editSection = (
-    key: 'rating' | 'ratingGap' | 'min' | 'max',
-    value: number
-  ) => {
-    let { finalScore } = props
-    if (key === 'rating') finalScore = value
-    props.updateSection({ ...props, finalScore, [key]: value })
+
+  const renderRatingBtns = (isDisabled: boolean) => {
+    if (
+      props.max === undefined ||
+      props.min === undefined ||
+      props.ratingGap === undefined
+    )
+      return null
+
+    const step = (props.max - props.min) / props.ratingGap
+    return Array.from({ length: step + 1 }, (_, index) => {
+      const rating = props.min! + index * props.ratingGap!
+      if (rating > props.max!) return null
+      return (
+        <Radio
+          key={index}
+          disabled={isDisabled}
+          checked={props.rating === rating}
+          onChange={() =>
+            props.updateSection({
+              ...props,
+              rating
+            })
+          }
+        >
+          {rating}
+        </Radio>
+      )
+    })
   }
 
-  const renderClickButton = useCallback(
-    (isDisabled: boolean) => {
-      if (
-        props.max === undefined ||
-        props.min === undefined ||
-        props.ratingGap === undefined
-      )
-        return null
-
-      const step = (props.max - props.min) / props.ratingGap
-      return Array.from({ length: step + 1 }, (_, index) => {
-        const rating = props.min! + index * props.ratingGap!
-        if (rating > props.max!) return null
-        return (
-          <Radio
-            key={index}
-            disabled={isDisabled}
-            checked={props.rating === rating}
-            onChange={() => editSection('rating', rating)}
-          >
-            {rating}
-          </Radio>
-        )
-      })
-    },
-    [props]
-  )
-
-  const renderModeEditing = useCallback(() => {
+  const renderOptionsDesign = () => {
     return (
       <>
         <Label>選項</Label>
@@ -97,14 +91,14 @@ export const RatingComponent = (props: RatingProps) => {
           <Radio
             key='number'
             checked={props.ratingType === 'number'}
-            onChange={() => editRatingType('number')}
+            onChange={() => onChangeRatingType('number')}
           >
             自行輸入
           </Radio>
           <Radio
             key='click'
             checked={props.ratingType === 'click'}
-            onChange={() => editRatingType('click')}
+            onChange={() => onChangeRatingType('click')}
           >
             選項點選（系統自動產生選項）
           </Radio>
@@ -115,14 +109,18 @@ export const RatingComponent = (props: RatingProps) => {
             precision={0}
             min={0}
             value={props.min}
-            onChange={(value: any) => editSection('min', Number(value) || 0)}
+            onChange={(value: number | null) =>
+              props.updateSection({ ...props, min: value ?? 0 })
+            }
           />
           <span>最大值：</span>
           <InputNumber
             precision={0}
             min={0}
             value={props.max}
-            onChange={(value: any) => editSection('max', Number(value) || 0)}
+            onChange={(value: number | null) =>
+              props.updateSection({ ...props, max: value ?? 0 })
+            }
           />
           {props.ratingType === 'click' && (
             <>
@@ -131,8 +129,11 @@ export const RatingComponent = (props: RatingProps) => {
                 precision={0}
                 min={0}
                 value={props.ratingGap}
-                onChange={(value: any) =>
-                  editSection('ratingGap', Number(value) || 0)
+                onChange={(value: number | null) =>
+                  props.updateSection({
+                    ...props,
+                    ratingGap: value ?? 0
+                  })
                 }
               />
             </>
@@ -144,33 +145,13 @@ export const RatingComponent = (props: RatingProps) => {
             <span style={{ marginRight: 'var(--gap-normal)' }}>
               呈現按鈕範例：
             </span>
-            {renderClickButton(false)}
+            {renderRatingBtns(false)}
           </div>
         )}
       </>
     )
-  }, [props])
-  const renderModePreviewEditing = () => {
-    return (
-      <>
-        <Label>評分</Label>
-        {props.ratingType === 'number' ? (
-          <InputNumber
-            disabled={true}
-            value={props.rating}
-            min={props.min}
-            max={props.max}
-            precision={0}
-            onChange={(value: any) => editSection('rating', Number(value) || 0)}
-            style={{ width: '150px' }}
-          />
-        ) : (
-          <StyledRatingType>{renderClickButton(true)}</StyledRatingType>
-        )}
-      </>
-    )
   }
-  const renderModeResponse = () => {
+  const renderOptionsReply = () => {
     return (
       <>
         <Label>評分</Label>
@@ -181,18 +162,20 @@ export const RatingComponent = (props: RatingProps) => {
             min={props.min}
             max={props.max}
             precision={0}
-            onChange={(value: any) => editSection('rating', Number(value) || 0)}
+            onChange={(value: number | null) =>
+              props.updateSection({ ...props, rating: value ?? 0 })
+            }
             style={{ width: '150px' }}
           />
         ) : (
           <StyledRatingType>
-            {renderClickButton(props.role !== context.role)}
+            {renderRatingBtns(props.role !== context.role)}
           </StyledRatingType>
         )}
       </>
     )
   }
-  const renderModeFinished = () => {
+  const renderOptionsRead = () => {
     return (
       <>
         <Label>評分</Label>
@@ -206,18 +189,16 @@ export const RatingComponent = (props: RatingProps) => {
             style={{ width: '150px' }}
           />
         ) : (
-          <StyledRatingType>{renderClickButton(true)}</StyledRatingType>
+          <StyledRatingType>{renderRatingBtns(true)}</StyledRatingType>
         )}
       </>
     )
   }
 
   const renderMode = {
-    [StatusEnum.editing]: renderModeEditing,
-    [StatusEnum.preview_editing]: renderModePreviewEditing,
-    [StatusEnum.waiting_for_response]: renderModeResponse,
-    [StatusEnum.waiting_for_correct]: renderModeResponse,
-    [StatusEnum.finished]: renderModeFinished
+    [StatusEnum.設計中]: renderOptionsDesign,
+    [StatusEnum.作答中]: renderOptionsReply,
+    [StatusEnum.唯讀]: renderOptionsRead
   } as const
   return <>{renderMode[context.status as keyof typeof renderMode]?.()}</>
 }

@@ -9,57 +9,18 @@ import {
   PermissionEnum
 } from '../types'
 import { MyContext } from '../TQgenerator'
+import {
+  optionDesignStyle,
+  optionStyle,
+  optionContentStyle
+} from '../style/common'
 
-const StyledEditingOption = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  &:not(:last-child) {
-    margin-bottom: var(--gap-small);
-  }
-
-  > *:not(:last-child) {
-    margin-right: var(--gap-normal);
-  }
+const StyledDesignOption = styled.div`
+  ${optionDesignStyle}
 `
 const StyledOption = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-
-  &:not(:last-child) {
-    margin-bottom: var(--gap-small);
-  }
-
-  > *:not(:last-child) {
-    margin-right: var(--gap-normal);
-  }
-
-  .option-content {
-    display: flex;
-    align-items: baseline;
-
-    &.answer {
-      font-weight: 800;
-      color: var(--color-black) !important;
-    }
-    &.passed {
-      font-weight: 400;
-      color: var(--color-success) !important;
-    }
-    &.failed {
-      font-weight: 400;
-      color: var(--color-danger) !important;
-    }
-  }
-  .option-content-answer {
-    min-width: 1em;
-    margin-right: 2px;
-  }
-  .option-content-label {
-    line-height: 1.3;
-  }
+  ${optionStyle}
+  ${optionContentStyle}
 `
 
 const answerOptions = ['O', 'X']
@@ -106,11 +67,9 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
   }
   const onChangeOptionLabel = (optionKey: string, value: string) => {
     const options = props.options.map((option) => {
-      let label = option.label
       if (option.key === optionKey) {
-        label = value
-      }
-      return { ...option, label }
+        return { ...option, label: value }
+      } else return option
     })
     props.updateSection({ ...props, options })
   }
@@ -137,7 +96,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
   const renderOptionsDesign = () => {
     return props.options.map((option, index) => {
       return (
-        <StyledEditingOption key={option.key}>
+        <StyledDesignOption key={option.key}>
           <div>{answerOptions[index]}</div>
           <Textarea
             value={option.label}
@@ -156,7 +115,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
               </Radio>
             </div>
           )}
-        </StyledEditingOption>
+        </StyledDesignOption>
       )
     })
   }
