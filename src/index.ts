@@ -12,6 +12,7 @@ import {
   EssayProps,
   RatingProps
 } from './types'
+import { autoCorrectTest, autoCorrectQuestionnaire } from './utils/autoCorrect'
 
 export { TQgenerator }
 export { TypeKeysEnum, ModeEnum, StatusEnum }
@@ -25,3 +26,4 @@ export type {
   EssayProps,
   RatingProps
 }
+export { autoCorrectTest, autoCorrectQuestionnaire }
