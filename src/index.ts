@@ -1,13 +1,10 @@
 import TQgenerator from './TQgenerator'
 import {
-  ModeType,
-  StatusType,
   ModeEnum,
   RoleEnum,
   StatusEnum,
   TQgeneratorProps,
   TypeKeysEnum,
-  TypeKeys,
   SectionProps,
   TrueFalseProps,
   SingleProps,
@@ -18,10 +15,8 @@ import {
 } from './types'
 
 export { TQgenerator }
-export { TypeKeys, TypeKeysEnum, ModeEnum, StatusEnum, RoleEnum }
+export { TypeKeysEnum, ModeEnum, StatusEnum, RoleEnum }
 export type {
-  ModeType,
-  StatusType,
   TQgeneratorProps,
   SectionProps,
   TrueFalseProps,

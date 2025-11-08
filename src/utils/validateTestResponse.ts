@@ -1,4 +1,4 @@
-import { SectionProps, TypeKeysEnum } from './types'
+import { SectionProps, TypeKeysEnum } from '../types'
 
 export const validateTestResponse = (sections: SectionProps<TypeKeysEnum>[]): boolean => {
   for (const section of sections) {

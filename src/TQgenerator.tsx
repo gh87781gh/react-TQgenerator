@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState } from 'react'
 import styled from 'styled-components'
 import './variables.css'
 import _ from 'lodash'
@@ -34,8 +34,6 @@ import { initRating } from './lib/rating'
 
 import { SortableItem } from './SortableSection'
 import { SectionContent } from './SortableSection'
-import { autoCorrectQuestionnaire, autoCorrectTest } from './autoCorrect'
-import { validateTestResponse } from './validateTestResponse'
 
 const StyledTQgenerator = styled.div`
   width: 100%;
@@ -155,7 +153,7 @@ const StyledTQgenerator = styled.div`
     }
   }
 
-  .section-body-add {
+  .section-body-footer {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -175,7 +173,7 @@ const StyledTQgenerator = styled.div`
   }
 `
 
-export type MyContextType = Omit<TQgeneratorProps, 'setStatus'>
+export type MyContextType = Omit<TQgeneratorProps, 'isLoading'>
 export const MyContext = React.createContext<MyContextType>({} as MyContextType)
 
 const TypeKeysForTest = [
@@ -194,42 +192,42 @@ const TypeKeysForQuest = [
 ]
 
 const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
-  const {
-    config,
-    assets,
-    actions,
-    mode,
-    status,
-    role,
-    actorID,
-    reviewerID,
-    setSections,
-    result,
-    components,
-    utility
-  } = props
-
-  if (!mode || !status) {
-    console.error('mode or status is not set')
-    return null
+  for (const key of Object.keys(props)) {
+    if (
+      props[key as keyof TQgeneratorProps] === undefined ||
+      props[key as keyof TQgeneratorProps] === null
+    ) {
+      console.error(`${key} is required`)
+      return null
+    }
   }
 
-  const { formItems, btnItems, modal: Modal, message: Message } = components
-  const { Select, SearchSelect } = formItems
-  const { BtnPrimary, BtnOutline, BtnGroup } = btnItems
+  const {
+    formItems,
+    btnItems,
+    modal: Modal,
+    message: Message
+  } = props.components
+  const { Select } = formItems
+  const { BtnPrimary } = btnItems
 
-  const [type, setType] = useState<TypeKeysEnum>(
-    mode === ModeEnum.test
+  const [type, setType] = useState<TypeKeysEnum | null>(
+    props.mode === ModeEnum.test
       ? TypeKeysForTest[0]
-      : mode === ModeEnum.questionnaire
+      : props.mode === ModeEnum.questionnaire
       ? TypeKeysForQuest[0]
-      : TypeKeysEnum.是非題 // TODO 應該要是null
+      : null
   )
-  const addSection = (type: TypeKeysEnum) => {
+  const addSection = (type: TypeKeysEnum | null) => {
+    if (!type) {
+      console.error('Add section type is required')
+      return
+    }
+
     const id = uuid() as string
 
     let newItem = _.cloneDeep(initBaseSection)
-    newItem.mode = mode as ModeEnum
+    newItem.mode = props.mode as ModeEnum
     newItem.id = id as string
 
     switch (type) {
@@ -268,13 +266,16 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       ...props.sections,
       { ...newItem }
     ] as SectionProps<TypeKeysEnum>[]
-    setSections?.(newSections)
+    props.setSections(newSections)
   }
   const editSection = (
-    id: string | null,
+    id: string,
     data: Partial<SectionProps<TypeKeysEnum>>
   ) => {
-    if (!id) return
+    if (!id) {
+      console.error('Edit section id is required')
+      return
+    }
 
     const newSections = props.sections.map((section) => {
       if (section.id === id) {
@@ -283,13 +284,35 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         return section
       }
     })
-    setSections?.(newSections as SectionProps<TypeKeysEnum>[])
+    props.setSections(newSections as SectionProps<TypeKeysEnum>[])
   }
-  const deleteSection = (id: string | null) => {
-    if (!id) return
+  const deleteSection = (id: string) => {
+    if (!id) {
+      console.error('Delete section id is required')
+      return
+    }
 
     const newSections = props.sections.filter((section) => section.id !== id)
-    setSections?.(newSections)
+    props.setSections(newSections)
+  }
+  const getOptions = () => {
+    return props.mode === ModeEnum.test
+      ? TypeKeysForTest.map((key) => {
+          return {
+            key,
+            value: key,
+            label: key
+          }
+        })
+      : props.mode === ModeEnum.questionnaire
+      ? TypeKeysForQuest.map((key) => {
+          return {
+            key,
+            value: key,
+            label: key
+          }
+        })
+      : []
   }
 
   // NOTE DND
@@ -315,320 +338,70 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       )
 
       const newSections = arrayMove(props.sections, oldIndex, newIndex)
-      setSections?.(newSections)
+      props.setSections(newSections)
     }
   }
-
-  const renderActionSubmitEditing = useCallback(() => {
-    return (
-      status === StatusEnum.editing && (
-        <BtnGroup style={{ textAlign: 'right', marginBottom: '1rem' }}>
-          <BtnOutline onClick={() => actions?.onPreviewEditing?.()}>
-            預覽
-          </BtnOutline>
-          <BtnPrimary onClick={() => actions?.onSubmitEditing?.()}>
-            儲存
-          </BtnPrimary>
-        </BtnGroup>
-      )
-    )
-  }, [actions, status])
-  const renderActionEditing = useCallback(() => {
-    return (
-      <div className='section-body-add'>
-        <Select
-          allowClear={false}
-          options={getOptions()}
-          value={type}
-          onChange={(value: any) => {
-            setType(value as TypeKeysEnum)
-          }}
-        />
-        <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
-      </div>
-    )
-  }, [type, status, addSection])
-  const [isShowSelectReviewer, setIsShowSelectReviewer] = useState(false)
-  const [selectedReviewerID, setSelectedReviewerID] = useState<string | null>(
-    assets?.classTeacherID ?? null
-  )
-  const renderActionResponse = useCallback(() => {
-    return (
-      <div className='section-body-add'>
-        <BtnPrimary
-          onClick={() => {
-            if (config?.isAllowSelectReviewer) {
-              setIsShowSelectReviewer(true)
-            } else {
-              if (mode === ModeEnum.test) {
-                const isValidPassed = validateTestResponse(props.sections)
-                if (!isValidPassed) {
-                  Message?.error('有未完成的題目')
-                  return
-                }
-                const score = autoCorrectTest(props.sections)
-                actions?.onSubmitResponse?.(score, null)
-              } else if (mode === ModeEnum.questionnaire) {
-                const score = autoCorrectQuestionnaire(props.sections)
-                actions?.onSubmitResponse?.(score, null)
-              }
-            }
-          }}
-        >
-          {config?.isAllowSelectReviewer ? '選擇評核者' : '提交'}
-        </BtnPrimary>
-      </div>
-    )
-  }, [props.sections, actions])
-  const renderActionCorrect = useCallback(() => {
-    let finalTotalScore = 0
-    if (mode === ModeEnum.test) {
-      finalTotalScore = autoCorrectTest(props.sections)
-    } else if (mode === ModeEnum.questionnaire) {
-      finalTotalScore = autoCorrectQuestionnaire(props.sections)
-    }
-    return (
-      <>
-        {config?.isAllowReSelectReviewer && (
-          <div className='section-body-add'>
-            <BtnPrimary onClick={() => setIsShowSelectReviewer(true)}>
-              重新指派評核者
-            </BtnPrimary>
-          </div>
-        )}
-        {config?.isShowCurrentFinalTotalScore && (
-          <div style={{ marginRight: '0.5rem' }}>
-            總得分：
-            {
-              finalTotalScore // 即時分數
-              // result?.score // 非即時分數
-            }
-          </div>
-        )}
-        {config?.isShowCorrectActionPass ? (
-          <BtnGroup>
-            <BtnOutline
-              onClick={() =>
-                actions?.onSubmitCorrect?.(
-                  finalTotalScore,
-                  assets?.ReviewResultMap?.評核為不通過 ?? null,
-                  config?.isReCorrecting ?? false
-                )
-              }
-            >
-              {!config?.isReCorrecting ? '不通過' : '更新為不通過'}
-            </BtnOutline>
-            <BtnPrimary
-              onClick={() =>
-                actions?.onSubmitCorrect?.(
-                  finalTotalScore,
-                  assets?.ReviewResultMap?.評核為通過 ?? null,
-                  config?.isReCorrecting ?? false
-                )
-              }
-            >
-              {!config?.isReCorrecting ? '通過' : '更新為通過'}
-            </BtnPrimary>
-          </BtnGroup>
-        ) : null}
-        {config?.isShowCorrectActionSubmit ? (
-          <BtnPrimary
-            onClick={() => {
-              actions?.onSubmitCorrect?.(
-                finalTotalScore,
-                null,
-                config?.isReCorrecting ?? false
-              )
-            }}
-          >
-            {!config?.isReCorrecting
-              ? `送出${
-                  mode === ModeEnum.test
-                    ? '批改'
-                    : mode === ModeEnum.questionnaire
-                    ? '評核'
-                    : ''
-                }`
-              : `更新${
-                  mode === ModeEnum.test
-                    ? '批改'
-                    : mode === ModeEnum.questionnaire
-                    ? '評核'
-                    : ''
-                }`}
-          </BtnPrimary>
-        ) : null}
-      </>
-    )
-  }, [mode, config, props.sections, actions, assets])
-  const renderAction = {
-    [StatusEnum.editing]: renderActionEditing,
-    [StatusEnum.preview_editing]: () => null,
-    [StatusEnum.waiting_for_response]: renderActionResponse,
-    [StatusEnum.waiting_for_correct]: renderActionCorrect,
-    [StatusEnum.finished]: () => null
-  }
-
-  useEffect(() => {
-    if (actions?.isAutoSubmitResponse) {
-      if (config?.isAllowSelectReviewer) {
-        setIsShowSelectReviewer(true)
-      } else {
-        if (mode === ModeEnum.test) {
-          const score = autoCorrectTest(props.sections)
-          actions?.onSubmitResponse?.(score, null)
-        } else if (mode === ModeEnum.questionnaire) {
-          const score = autoCorrectQuestionnaire(props.sections)
-          actions?.onSubmitResponse?.(score, null)
-        }
-      }
-    }
-  }, [actions?.isAutoSubmitResponse])
-
-  const getOptions = () => {
-    return mode === ModeEnum.test
-      ? TypeKeysForTest.map((key) => {
-          return {
-            key,
-            value: key,
-            label: key
-          }
-        })
-      : mode === ModeEnum.questionnaire
-      ? TypeKeysForQuest.map((key) => {
-          return {
-            key,
-            value: key,
-            label: key
-          }
-        })
-      : []
-  }
-
-  const isShowSections = useMemo(() => {
-    if (status === StatusEnum.waiting_for_correct) {
-      return config?.isShowCorrectContent
-    }
-
-    return true
-  }, [config, status])
 
   return (
     <MyContext.Provider
       value={{
-        mode,
-        status,
-        role,
+        mode: props.mode,
+        status: props.status,
+        userRole: props.userRole,
         sections: props.sections,
-        setSections,
-        actorID,
-        reviewerID,
-        components,
-        utility,
-        result,
-        config
+        setSections: props.setSections,
+        renderSectionBodyFooter: props.renderSectionBodyFooter,
+        permissions: props.permissions,
+        components: props.components,
+        utility: props.utility
       }}
     >
       <StyledTQgenerator>
-        {renderActionSubmitEditing?.()}
-
-        {/* {isShowSections &&
-          props.sections
-            .filter((section) => section.id !== null)
-            .map((section, index) => {
-              return (
-                <SectionContent
-                  key={section.id}
-                  section={section}
-                  index={index}
-                  editSection={editSection}
-                  deleteSection={deleteSection}
-                />
-              )
-            })} */}
-
-        {isShowSections && (
-          <DndContext
-            sensors={[mouseSensor, pointerSensor]}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={props.sections
-                .map((section) => section.id)
-                .filter((id): id is string => id !== null)}
-              strategy={verticalListSortingStrategy}
-            >
-              {props.sections
-                .filter((section) => section.id !== null)
-                .map((section, index) => {
-                  return (
-                    <SortableItem key={section.id} id={section.id!}>
-                      <SectionContent
-                        section={section}
-                        index={index}
-                        editSection={editSection}
-                        deleteSection={deleteSection}
-                      />
-                    </SortableItem>
-                  )
-                })}
-            </SortableContext>
-          </DndContext>
-        )}
-        <div
-          style={{
-            width: '100%',
-            height: '100px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
+        <DndContext
+          sensors={[mouseSensor, pointerSensor]}
+          onDragEnd={handleDragEnd}
         >
-          {renderAction[status as keyof typeof renderAction]?.()}
+          <SortableContext
+            items={props.sections
+              .map((section) => section.id)
+              .filter((id): id is string => id !== null)}
+            strategy={verticalListSortingStrategy}
+          >
+            {props.sections
+              .filter((section) => section.id !== null)
+              .map((section, index) => {
+                return (
+                  <SortableItem key={section.id} id={section.id!}>
+                    <SectionContent
+                      section={section}
+                      index={index}
+                      editSection={editSection}
+                      deleteSection={deleteSection}
+                    />
+                  </SortableItem>
+                )
+              })}
+          </SortableContext>
+        </DndContext>
+        <div className='section-body-footer'>
+          {props.renderSectionBodyFooter ? (
+            props.renderSectionBodyFooter?.()
+          ) : props.status === StatusEnum.設計中 ? (
+            <>
+              <Select
+                allowClear={false}
+                options={getOptions()}
+                value={type}
+                onChange={(value: any) => {
+                  setType(value as TypeKeysEnum)
+                }}
+              />
+              <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
+            </>
+          ) : null}
         </div>
-
         <div className='version'>v{packageJson.version}</div>
       </StyledTQgenerator>
-
-      <Modal
-        title='訊息'
-        open={isShowSelectReviewer}
-        onCancel={() => setIsShowSelectReviewer(false)}
-        footer={[
-          <BtnOutline key='取消' onClick={() => setIsShowSelectReviewer(false)}>
-            取消
-          </BtnOutline>,
-          <BtnPrimary
-            key='確認'
-            disabled={!selectedReviewerID}
-            onClick={() => {
-              setIsShowSelectReviewer(false)
-              let score = 0
-              if (mode === ModeEnum.test) {
-                const isValidPassed = validateTestResponse(props.sections)
-                if (!isValidPassed) {
-                  Message?.error('有未完成的題目')
-                  return
-                }
-                score = autoCorrectTest(props.sections)
-              } else if (mode === ModeEnum.questionnaire) {
-                score = autoCorrectQuestionnaire(props.sections)
-              }
-              actions?.onSubmitResponse?.(score, selectedReviewerID)
-            }}
-          >
-            確認提交
-          </BtnPrimary>
-        ]}
-      >
-        <SearchSelect
-          options={assets?.reviewerOptions}
-          value={selectedReviewerID}
-          onChange={(value: any) => {
-            setSelectedReviewerID(value)
-          }}
-        />
-      </Modal>
     </MyContext.Provider>
   )
 }

@@ -4,25 +4,34 @@ export enum ModeEnum {
   test = 'test',
   questionnaire = 'questionnaire'
 }
+
 export enum StatusEnum {
-  editing = 'editing',
-  preview_editing = 'preview_editing',
-  waiting_for_response = 'waiting_for_response',
-  waiting_for_correct = 'waiting_for_correct',
-  finished = 'finished',
-}
-export enum RoleEnum {
-  manager = 'manager',
-  actor = 'actor',
-  reviewer = 'reviewer'
-}
-export enum CoopModeEnum {
-  全部只有填寫者 = 'single',
-  有填寫者也有評核者 = 'multiple'
+  設計中,
+  作答中,
+  唯讀
 }
 
-export type ModeType = keyof typeof ModeEnum
-export type StatusType = keyof typeof StatusEnum
+/**
+ * TQgenerator 內部的權限定義，決定畫面呈現及操作範圍，未來可視需求增加更多種權限（已建立的權限不能刪除且不能改變定義）
+ * 
+ * admin: 系統管理（上帝視角）
+ * 設計: 可以設計題目、選項、解析、分數、選擇各題作答者的身份
+ * 作答: 可以作答
+ * 批改: 可以批改各題作答是否通過（答對/答錯）
+ * 查看內容: 可以查看題目、選項、作答內容
+ * 查看結果: 可以查看各題通過結果（答對/答錯）
+ * 查看答案: 可以查看正確答案（含解析）
+ * 
+ */
+export enum PermissionEnum {
+  admin,
+  設計,
+  作答,
+  批改,
+  查看內容,
+  查看結果,
+  查看答案,
+}
 
 export enum TypeKeysEnum {
   是非題 = '是非題',
@@ -33,26 +42,22 @@ export enum TypeKeysEnum {
   評分題 = '評分題'
 }
 
-export type TypeKeysType = keyof typeof TypeKeysEnum
-export const TypeKeys = Object.values(TypeKeysEnum)
-
-
 interface BaseSectionProps {
   id: string | null
   mode: ModeEnum | null
-  role: RoleEnum | null
+  userRole: string | null // 進入者角色（取決於對接系統內有什麼角色）
   updateSection: (section: SectionProps<TypeKeysEnum>) => void
   question: string // 問題
   answer: string | number | null | string[] | dayjs.Dayjs  // 解析
   response: string | number | null | string[] | dayjs.Dayjs // 回答
-  score: number // 題目設定的分數，測驗才用得到
-  finalScore: number //得分
+  score: number // 題目設定的應得分數，測驗才用得到
+  finalScore: number // 實際得分
   isPass: boolean | null // 是否通過
 }
 export const initBaseSection: BaseSectionProps = {
   id: null,
   mode: null,
-  role: RoleEnum.actor,
+  userRole: null,
   updateSection: () => { },
   question: '',
   answer: null,
@@ -132,53 +137,14 @@ export type SectionTypeMap = {
 export type SectionProps<T extends TypeKeysEnum> = SectionTypeMap[T]
 
 export type TQgeneratorProps = {
-  config?: {
-    isAllowSelectReviewer?: boolean | null
-    isAllowReSelectReviewer?: boolean | null
-    isAllowReCorrect?: boolean | null
-    isReCorrecting?: boolean
-    isPreviewEditing?: boolean | null
-    isAllowReview?: boolean | null
-    isAllowReviewWithAnswer?: boolean | null
-    isShowCorrectContent?: boolean | null
-    isShowCurrentFinalTotalScore?: boolean | null
-    isShowCorrectActionPass?: boolean | null
-    isShowCorrectActionSubmit?: boolean | null
-  }
-  assets?: {
-    ReviewResultMap?: {
-      [key: string]: number | null
-    },
-    reviewerOptions?: {
-      key: string
-      label: string
-      value: string
-    }[],
-    classTeacherID?: string | null
-  }
-  actions?: {
-    onSubmitEditing?: () => void
-    onPreviewEditing?: () => void
-    onSubmitResponse?: (totalScore: number, reviewerID: string | null) => void
-    onSubmitCorrect?: (totalScore: number, reviewResult: number | null, isReCorrecting?: boolean) => void
-    isAutoSubmitResponse?: boolean
-  }
-
+  isLoading: boolean
   mode: ModeEnum | null
   status: StatusEnum | null
-  role: RoleEnum | null
+  userRole: string | null
   sections: SectionProps<TypeKeysEnum>[]
-  setSections?: (sections: SectionProps<TypeKeysEnum>[]) => void
-  actorID: string | null //填寫者
-  reviewerID: string | null //評核者
-  totalScore?: number | null // 預計總分
-
-  result: {
-    score: number | null // 得分
-    reviewResult?: number | null // 評核為通過或不通過
-    targetUserID?: string | null // TODO 待討論
-    // specifyUserID?: string | null
-  }
+  setSections: (sections: SectionProps<TypeKeysEnum>[]) => void
+  renderSectionBodyFooter?: () => React.ReactNode
+  permissions: PermissionEnum[]
 
   components: {
     formItems: {
@@ -218,4 +184,46 @@ export type TQgeneratorProps = {
     },
     formatDate: (date: any) => string
   }
+
+  // TODO 待檢查
+  // config?: {
+  //   isAllowSelectReviewer?: boolean | null
+  //   isAllowReSelectReviewer?: boolean | null
+  //   isAllowReCorrect?: boolean | null
+  //   isReCorrecting?: boolean
+  //   isPreviewEditing?: boolean | null
+  //   isAllowReview?: boolean | null
+  //   isAllowReviewWithAnswer?: boolean | null
+  //   isShowCorrectContent?: boolean | null
+  //   isShowCurrentFinalTotalScore?: boolean | null
+  //   isShowCorrectActionPass?: boolean | null
+  //   isShowCorrectActionSubmit?: boolean | null
+  // }
+  // assets?: {
+  //   ReviewResultMap?: {
+  //     [key: string]: number | null
+  //   },
+  //   reviewerOptions?: {
+  //     key: string
+  //     label: string
+  //     value: string
+  //   }[],
+  //   classTeacherID?: string | null
+  // }
+  // actions?: {
+  //   onSubmitEditing?: () => void
+  //   onPreviewEditing?: () => void
+  //   onSubmitResponse?: (totalScore: number, reviewerID: string | null) => void
+  //   onSubmitCorrect?: (totalScore: number, reviewResult: number | null, isReCorrecting?: boolean) => void
+  //   isAutoSubmitResponse?: boolean
+  // }
+  // actorID: string | null //填寫者
+  // reviewerID: string | null //評核者
+  // totalScore?: number | null // 預計總分
+  // result: {
+  //   score: number | null // 得分
+  //   reviewResult?: number | null // 評核為通過或不通過
+  //   targetUserID?: string | null // TODO 中山不用，但門諾要，要再加上相關邏輯
+  //   // specifyUserID?: string | null
+  // }
 }

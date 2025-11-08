@@ -89,40 +89,71 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
   const { formItems } = components
   const { Label, Radio, Textarea } = formItems
 
-  const onChangeOptionsChecked = (optionKey: string) => {
-    let { answer, response } = props
-    if (context.status === StatusEnum.設計中) {
-      answer = optionKey
-    }
-    if (context.status === StatusEnum.作答中) {
-      response = optionKey
-    }
-    props.updateSection({ ...props, answer, response })
-  }
-  const onEditOptionsLabel = (optionKey: string, value: string) => {
-    const options = props.options.map((option) => {
-      let label = option.label
-      if (option.key === optionKey) {
-        label = value
+  const editOptionsChecked = useCallback(
+    (optionKey: string) => {
+      let { answer, response } = props
+      if (context.status === StatusEnum.設計中) {
+        answer = optionKey
       }
-      return { ...option, label }
-    })
-    props.updateSection({ ...props, options })
-  }
+      if (context.status === StatusEnum.作答中) {
+        response = optionKey
+      }
+      props.updateSection({ ...props, answer, response })
+    },
+    [context, props]
+  )
 
-  const onAutoCorrect = () => {
-    if (context.mode === ModeEnum.test) {
-      let { answer, response, finalScore, isPass } = props
-      if (response === answer) {
-        finalScore = props.score
-        isPass = true
-      } else {
-        finalScore = 0
-        isPass = false
+  const editOptions = useCallback(
+    (
+      optionKey: string,
+      key: 'label' | 'isChecked',
+      value?: string | boolean | number
+    ) => {
+      let { answer, response, options, finalScore, isPass } = props
+      if (key === 'isChecked') {
+        if (context.status === StatusEnum.editing) {
+          answer = optionKey
+        }
+
+        if (
+          context.status === StatusEnum.waiting_for_response ||
+          context.status === StatusEnum.waiting_for_correct
+        ) {
+          response = optionKey
+          if (context.mode === ModeEnum.test) {
+            if (response === answer) {
+              finalScore = props.score
+              isPass = true
+            } else {
+              finalScore = 0
+              isPass = false
+            }
+          }
+        }
+
+        props.updateSection({
+          ...props,
+          answer,
+          response,
+          finalScore,
+          isPass
+        })
       }
-      props.updateSection({ ...props, finalScore, isPass })
-    }
-  }
+
+      if (key === 'label') {
+        const newOptions = options.map((option) => {
+          if (key === 'label') {
+            if (option.key === optionKey) {
+              option.label = value as string
+            }
+          }
+          return option
+        })
+        props.updateSection({ ...props, options: newOptions })
+      }
+    },
+    [props, context]
+  )
 
   const passedClass = useMemo(
     () => (option: TrueFalseProps['options'][number]) => {
@@ -159,7 +190,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
           <Textarea
             value={option.label}
             onChange={(e: any) =>
-              onEditOptionsLabel(option.key, e.target.value)
+              editOptions(option.key, 'label', e.target.value)
             }
             autoSize={{ minRows: 1, maxRows: 4 }}
           />
@@ -167,7 +198,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
             <div style={{ width: '200px' }}>
               <Radio
                 checked={option.key === props.answer}
-                onChange={() => onChangeOptionsChecked(option.key)}
+                onChange={() => editOptions(option.key, 'isChecked')}
               >
                 正確答案
               </Radio>
@@ -205,7 +236,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
           <Radio
             disabled={props.role !== context.role}
             checked={option.key === props.response}
-            onChange={() => onChangeOptionsChecked(option.key)}
+            onChange={() => editOptions(option.key, 'isChecked')}
           >
             <div className='option-content'>
               <span className='option-content-answer'>
@@ -235,7 +266,7 @@ export const TrueFalseComponent = (props: TrueFalseProps) => {
             checked={option.key === props.response}
             onChange={() => {
               if (context.status === StatusEnum.waiting_for_correct) {
-                onChangeOptionsChecked(option.key)
+                editOptions(option.key, 'isChecked')
               }
             }}
           >
