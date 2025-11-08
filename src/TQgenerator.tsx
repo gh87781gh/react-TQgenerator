@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
-import './variables.css'
+import './style/variables.css'
 import _ from 'lodash'
 import packageJson from '../package.json'
 import {
