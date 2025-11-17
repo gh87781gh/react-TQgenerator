@@ -174,7 +174,8 @@ export type TQgeneratorProps = {
       ) => Promise<string>
     },
     modal: React.ComponentType<any>,
-    message: any
+    message: any,
+    spin: React.ComponentType<any>
   },
   utility: {
     icons: {

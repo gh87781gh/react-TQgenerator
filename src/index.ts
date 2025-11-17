@@ -2,6 +2,7 @@ import TQgenerator from './TQgenerator'
 import {
   ModeEnum,
   StatusEnum,
+  PermissionEnum,
   TQgeneratorProps,
   TypeKeysEnum,
   SectionProps,
@@ -15,7 +16,7 @@ import {
 import { autoCorrectTest, autoCorrectQuestionnaire } from './utils/autoCorrect'
 
 export { TQgenerator }
-export { TypeKeysEnum, ModeEnum, StatusEnum }
+export { TypeKeysEnum, ModeEnum, StatusEnum, PermissionEnum }
 export type {
   TQgeneratorProps,
   SectionProps,
