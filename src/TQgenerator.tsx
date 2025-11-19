@@ -44,6 +44,27 @@ const StyledTQgenerator = styled.div`
   border-radius: 0.5rem;
   border: 1px solid var(--color-primary);
 
+  .article-title,
+  .article-footer {
+    padding: 2rem;
+
+    & > *:not(:last-child) {
+      margin-bottom: var(--gap-normal);
+    }
+  }
+  .article-title {
+    border-bottom: 1px solid var(--color-border-base);
+  }
+  .article-footer {
+    border-top: 1px solid var(--color-border-base);
+  }
+
+  .version {
+    text-align: center;
+    color: var(--color-disabled-icon);
+    font-size: 0.8rem;
+  }
+
   .section {
     background-color: var(--color-white);
     border-radius: 0.5rem;
@@ -160,29 +181,11 @@ const StyledTQgenerator = styled.div`
       margin-bottom: var(--gap-small);
     }
   }
-
-  .section-body-footer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    max-width: 300px;
-    margin: 0 auto;
-
-    > *:not(:last-child) {
-      margin-right: 1rem;
-    }
-  }
-
-  .version {
-    text-align: center;
-    color: var(--color-disabled-icon);
-    font-size: 0.8rem;
-    margin-top: var(--gap-normal);
-  }
 `
 
-export type MyContextType = Omit<TQgeneratorProps, 'isLoading'>
-export const MyContext = React.createContext<MyContextType>({} as MyContextType)
+export const MyContext = React.createContext<TQgeneratorProps>(
+  {} as TQgeneratorProps
+)
 
 const TypeKeysForTest = [
   TypeKeysEnum.是非題,
@@ -210,7 +213,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     }
   }
 
-  const { formItems, btnItems } = props.components
+  const { formItems, btnItems, spin: Spin } = props.components
   const { Select } = formItems
   const { BtnPrimary } = btnItems
 
@@ -269,7 +272,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       ...props.sections,
       { ...newItem }
     ] as SectionProps<TypeKeysEnum>[]
-    props.setSections(newSections)
+    props.setSections?.(newSections)
   }
   const editSection = (
     id: string,
@@ -287,7 +290,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         return section
       }
     })
-    props.setSections(newSections as SectionProps<TypeKeysEnum>[])
+    props.setSections?.(newSections as SectionProps<TypeKeysEnum>[])
   }
   const deleteSection = (id: string) => {
     if (!id) {
@@ -296,7 +299,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
     }
 
     const newSections = props.sections.filter((section) => section.id !== id)
-    props.setSections(newSections)
+    props.setSections?.(newSections)
   }
   const getOptions = () => {
     return props.mode === ModeEnum.test
@@ -341,7 +344,7 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
       )
 
       const newSections = arrayMove(props.sections, oldIndex, newIndex)
-      props.setSections(newSections)
+      props.setSections?.(newSections)
     }
   }
 
@@ -353,59 +356,63 @@ const TQgenerator: React.FC<TQgeneratorProps> = (props) => {
         role: props.role,
         sections: props.sections,
         setSections: props.setSections,
-        renderSectionBodyFooter: props.renderSectionBodyFooter,
+        renderArticleFooter: props.renderArticleFooter,
         permissions: props.permissions,
-        replyRoleMap: props.replyRoleMap,
+        applyRoleMap: props.applyRoleMap,
         components: props.components,
         utility: props.utility
       }}
     >
-      <StyledTQgenerator>
-        <DndContext
-          sensors={[mouseSensor, pointerSensor]}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={props.sections
-              .map((section) => section.id)
-              .filter((id): id is string => id !== null)}
-            strategy={verticalListSortingStrategy}
+      <Spin spinning={props.isLoading ?? false}>
+        <StyledTQgenerator>
+          {props.renderArticleTitle && (
+            <div className='section-body-title'>
+              {props.renderArticleTitle?.()}
+            </div>
+          )}
+          <DndContext
+            sensors={[mouseSensor, pointerSensor]}
+            onDragEnd={handleDragEnd}
           >
-            {props.sections
-              .filter((section) => section.id !== null)
-              .map((section, index) => {
-                return (
-                  <SortableItem key={section.id} id={section.id!}>
-                    <SectionContent
-                      section={section}
-                      index={index}
-                      editSection={editSection}
-                      deleteSection={deleteSection}
-                    />
-                  </SortableItem>
-                )
-              })}
-          </SortableContext>
-        </DndContext>
-        <div className='section-body-footer'>
-          {props.renderSectionBodyFooter ? (
-            props.renderSectionBodyFooter?.()
-          ) : props.status === StatusEnum.設計中 ? (
-            <>
-              <Select
-                allowClear={false}
-                options={getOptions()}
-                value={type}
-                onChange={(value: any) => {
-                  setType(value as TypeKeysEnum)
-                }}
-              />
-              <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
-            </>
-          ) : null}
-        </div>
-        <div className='version'>v{packageJson.version}</div>
-      </StyledTQgenerator>
+            <SortableContext
+              items={props.sections
+                .map((section) => section.id)
+                .filter((id): id is string => id !== null)}
+              strategy={verticalListSortingStrategy}
+            >
+              {props.sections
+                .filter((section) => section.id !== null)
+                .map((section, index) => {
+                  return (
+                    <SortableItem key={section.id} id={section.id!}>
+                      <SectionContent
+                        section={section}
+                        index={index}
+                        editSection={editSection}
+                        deleteSection={deleteSection}
+                        onUploadQuestionImg={props.onUploadQuestionImg}
+                      />
+                    </SortableItem>
+                  )
+                })}
+            </SortableContext>
+          </DndContext>
+          <div className='article-footer'>
+            {props.status === StatusEnum.設計中 && (
+              <>
+                <Select
+                  options={getOptions()}
+                  value={type}
+                  onChange={(value: TypeKeysEnum) => setType(value)}
+                />
+                <BtnPrimary onClick={() => addSection(type)}>新增</BtnPrimary>
+              </>
+            )}
+            {props.renderArticleFooter && props.renderArticleFooter?.()}
+            <div className='version'>v{packageJson.version}</div>
+          </div>
+        </StyledTQgenerator>
+      </Spin>
     </MyContext.Provider>
   )
 }

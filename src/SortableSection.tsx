@@ -1,14 +1,18 @@
 import React, { useContext } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+
 import {
   SectionProps,
   TypeKeysEnum,
   ModeEnum,
   StatusEnum,
-  PermissionEnum
+  PermissionEnum,
+  TQgeneratorProps
 } from './types'
 import { MyContext } from './TQgenerator'
+import { Editor } from './components/editor'
+
 import { TrueFalseComponent } from './lib/true-false'
 import { SingleComponent } from './lib/single'
 import { MultipleComponent } from './lib/multiple'
@@ -64,22 +68,23 @@ type SectionContentProps = {
     onTouchStart?: (event: React.TouchEvent) => void
     onKeyDown?: (event: React.KeyboardEvent) => void
   }
+  onUploadQuestionImg?: TQgeneratorProps['onUploadQuestionImg']
 }
 const SectionContent: React.FC<SectionContentProps> = ({
   section,
   index,
   editSection,
   deleteSection,
-  dragHandleProps
+  dragHandleProps,
+  onUploadQuestionImg
 }) => {
   const context = useContext(MyContext)
   const { utility, components } = context
   const { icons } = utility
   const { IconDrag, IconDeleteOutline } = icons
-  const { formItems, btnItems, editor } = components
+  const { formItems, btnItems } = components
   const { InputNumber, Radio } = formItems
   const { BtnGroup, BtnText } = btnItems
-  const { component: Editor, onUploadImage } = editor
 
   const renderSectionTitleScore = () => {
     if (context.mode !== ModeEnum.test) return null
@@ -116,7 +121,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
               onChange={(content: string) => {
                 editSection(section.id!, { question: content })
               }}
-              onUploadImage={onUploadImage}
+              onUploadImage={onUploadQuestionImg}
             />
           </div>
         </div>
@@ -163,9 +168,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
         <div className='section-title-actions clearfix'>
           {context.mode === ModeEnum.questionnaire &&
             context.status === StatusEnum.設計中 &&
-            Array.isArray(context.replyRoleMap) && (
+            Array.isArray(context.applyRoleMap) && (
               <BtnGroup style={{ float: 'right' }}>
-                {context.replyRoleMap.map((role) => (
+                {context.applyRoleMap.map((role) => (
                   <Radio
                     key={role.key}
                     checked={section.role === role.key}

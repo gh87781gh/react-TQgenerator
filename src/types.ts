@@ -137,15 +137,21 @@ export type SectionTypeMap = {
 export type SectionProps<T extends TypeKeysEnum> = SectionTypeMap[T]
 
 export type TQgeneratorProps = {
-  isLoading: boolean
+  isLoading?: boolean
   mode: ModeEnum | null
   status: StatusEnum | null
   role: string | null
   sections: SectionProps<TypeKeysEnum>[]
-  setSections: (sections: SectionProps<TypeKeysEnum>[]) => void
-  renderSectionBodyFooter?: () => React.ReactNode
+  setSections?: (sections: SectionProps<TypeKeysEnum>[]) => void
+  renderArticleTitle?: () => React.ReactNode
+  renderArticleFooter?: () => React.ReactNode
   permissions: PermissionEnum[]
-  replyRoleMap?: { key: string, value: string }[] // 由對接系統傳入的作答者設定，供 design 時選擇作答者用
+  applyRoleMap?: { key: string, value: string }[] // 由對接系統傳入的作答者設定，供 design 時選擇作答者用
+  onUploadQuestionImg?: (
+    file: File,
+    onProgress?: (event: { progress: number }) => void,
+    abortSignal?: AbortSignal
+  ) => Promise<string>
 
   components: {
     formItems: {
@@ -165,14 +171,15 @@ export type TQgeneratorProps = {
       BtnOutline: React.ComponentType<any>
       BtnText: React.ComponentType<any>
     },
-    editor: {
-      component: React.ComponentType<any>,
-      onUploadImage?: (
-        file: File,
-        onProgress?: (event: { progress: number }) => void,
-        abortSignal?: AbortSignal
-      ) => Promise<string>
-    },
+    // TODO 即將拿掉
+    // editor: {
+    //   component: React.ComponentType<any>,
+    //   onUploadImage?: (
+    //     file: File,
+    //     onProgress?: (event: { progress: number }) => void,
+    //     abortSignal?: AbortSignal
+    //   ) => Promise<string>
+    // },
     modal: React.ComponentType<any>,
     message: any,
     spin: React.ComponentType<any>
